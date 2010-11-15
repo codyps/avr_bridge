@@ -13,6 +13,14 @@
 
 #include <stdio.h>
 
+void initRos(){
+	//Set up the serial communicaton and wait a bit to make sure
+	//that the program and grab its id before we go into any other
+	//set up routines
+	Serial.begin(57600);
+	for (int i; i<100; i++) {ros.spin();delay(10);}
+}
+
 
 int uart_putchar(char c, FILE *stream)
 {

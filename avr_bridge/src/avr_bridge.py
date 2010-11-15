@@ -56,10 +56,6 @@ class AvrBridge():
 		
 	def shutdown(self):
 		self.__done = True
-		try:
-			self.port.close()
-		except:
-			pass
 		
 	def parseConfig(self, configFile):
 		""" takes a file-like object of the configuration file
@@ -167,7 +163,7 @@ class AvrBridge():
 		if (port.find('/dev/') == -1):
 			port = '/dev/'+ port
 
-		self.port = serial.Serial(port, 115200, timeout=0.03)
+		self.port = serial.Serial(port, 57600, timeout=0.1)
 		time.sleep(1)
 		self.portName = port
 		self.port.flushOutput()
@@ -175,8 +171,10 @@ class AvrBridge():
 
 	
 	def __getPacket(self):
+		if not self.port.isOpen():
+			return None, None, 0, []
 		header = self.port.read(4)
-		if not (len(header) == 4):
+		if not (len(header) == 4) :
 			self.port.flushOutput()
 			self.port.flushInput()
 			return None, None, 0, []
@@ -197,7 +195,7 @@ class AvrBridge():
 		while not self.__done:
 			packet  = self.__getPacket()
 			packet_type, topic_tag, data_length, msg_data = packet
-			
+			#print packet
 			if (self.is_valid_packet(packet)):
 				rospy.logdebug("Packet recieved " + str(packet))
 				# packet types
@@ -231,7 +229,11 @@ class AvrBridge():
 					name.deserialize(msg_data)
 					self.name = name.data
 			time.sleep(0.01)
-			
+		try:
+			self.port.close()
+		except:
+			pass
+
 			
 
 	def handle_service(self, msg, topic):
@@ -264,9 +266,17 @@ class AvrBridge():
 		
 		
 	def getId(self):
+		t = 0
 		self.sendAVR(std_msgs.msg.Empty(), rtype = 255, tag=0)
 		while (self.name == None):
 			time.sleep(0.03)
+			t = t+1
+			if (t >5):
+				self.sendAVR(std_msgs.msg.Empty(), rtype = 255, tag=0)
+			if (t >10):
+				self.sendAVR(std_msgs.msg.Empty(), rtype = 255, tag=0)
+			if (t > 15):
+				return None
 		return self.name
 
 def struct_test():
