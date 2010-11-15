@@ -26,8 +26,6 @@ import roslib.genpy
 import yaml
 import StringIO
 
-config_example = yaml.load(open('/home/asher/igvc/avr_bridge/config/example.yaml','r'))
-
 
 primatives ={
 				'bool'  :   ('bool', 1) ,
@@ -46,12 +44,26 @@ primatives ={
 				'string' :  ('ROS::string', 0)
 				}
 
+def extract_ros_type(field):
+	""" This is an utility function to extract the basic type
+		from the msg_spec field
+		without the array symbols
+		and with the pkg sepparted
+	"""
+	try:
+		incPkg, incName = field.type.split('/')
+	except:
+		incPkg = None
+		incName = field.type
+	if field.is_array:
+		incName = incName[:incName.find('[')]
+	return incPkg, incName
 	
 def serialize_primative(f, buffer_addr, field):
 	"""
 	Generates c code to serialize rostype of fieldname at the buffer 
 	"""
-	ftype = field.type.replace('[]','')
+	fpkg, ftype = extract_ros_type(field)
 	ctype, clen = primatives[ftype]
 	
 	
@@ -67,7 +79,7 @@ def deserialize_primative(f, buffer_addr, field):
 	Generate c code to deserialize a rosmsg field of type ctype from 
 	specified buffer.
 	"""
-	ftype = field.type.replace('[]','')
+	fpkg, ftype = extract_ros_type(field)
 	ctype, clen = primatives[ftype]
 
 	if (field.is_array or field.type == 'string'):
@@ -105,8 +117,7 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	#write includes
 	for field in msg_spec.parsed_fields():
 		if not field.is_builtin:
-			incPkg, incName = field.type.split('/')
-			incName = incName.replace('[]','')
+			incPkg, incName = extract_ros_type(field)
 			f.write('#include "%s.h"\n'%(incName))
 	
 
@@ -129,13 +140,16 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	
 	#write msg fields
 	for field in msg_spec.parsed_fields():
-		ftype = field.type.replace('/', '::')
-		ftype = ftype.replace('[]','')
+		fpkg, ftype = extract_ros_type(field)
+		if fpkg != None:
+			ftype = fpkg +"::"+ftype
+		if ftype == 'Header':
+			ftype = "roslib::"+ftype
 		if field.is_builtin:
 			ftype, clen = primatives[ftype]
 		if field.is_array:
 			if field.array_len:
-				f.write('\tROS::vector<%s> %s; //fixed at length %d\n'%(ftype, field.name))
+				f.write('\tROS::vector<%s> %s; //fixed at length %d\n'%(ftype, field.name, field.array_len))
 			else :
 				f.write('\tROS::vector<%s> %s;\n'%(ftype, field.name))
 		else:
@@ -179,7 +193,7 @@ def msg_size(f, msg_spec):
 	
 	for field in msg_spec.parsed_fields():
 		if (field.is_builtin and not (field.type == 'string') ):
-			ftype = field.type.replace('[]','')
+			fpkg, ftype = extract_ros_type(field)
 			ctype, clen = primatives[ftype]
 			f.write('msgSize += sizeof(%s);\n'%(ctype))
 		else:
@@ -204,10 +218,6 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	#set fixed length arrays
 	constructor_init= ''
 	for field in msg_spec.parsed_fields():
-		ftype = field.type.replace('/', '::')
-		ftype = ftype.replace('[]','')
-		if field.is_builtin:
-			ftype = primatives[ftype]
 		if field.is_array:
 			if field.array_len:
 				constructor_init +='%s(%d),' %(field.name, field.array_len)
