@@ -198,7 +198,7 @@ class AvrBridge():
 			packet_type, topic_tag, data_length, msg_data = packet
 			
 			if (self.is_valid_packet(packet)):
-				print packet
+				rospy.logdebug("Packet recieved " + str(packet))
 				# packet types
 				# 0 avr is publishing
 				# 1 avr is subscribing
@@ -210,6 +210,10 @@ class AvrBridge():
 					msg = self.topics[topic]() #instantiate a msg object from the topic
 					try:
 						msg.deserialize(msg_data)
+						
+						if hasattr(msg, 'header'):
+							msg.header.time = rospy.Time()
+						
 						self.publishers[topic].publish(msg)
 					except:
 						pass
@@ -233,7 +237,7 @@ class AvrBridge():
 		pass
 		
 	def subscriberCB(self, msg, t):
-		rospy.loginfo("topic : %s   \n msg:   %s"%(t,msg))
+		rospy.logdebug("topic : %s   \n msg:   %s"%(t,msg))
 		self.sendAVR(msg, topic = t, rtype =0)
 		
 	def sendAVR(self, msg, topic = None, rtype = None, tag = None):

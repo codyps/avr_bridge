@@ -21,3 +21,4 @@ if __name__ == '__main__':
 	bridge = avr_bridge.AvrBridge(open(configFile,'r'))
 	bridge.run()
 	rospy.spin()
+	bridge.shutdown()
