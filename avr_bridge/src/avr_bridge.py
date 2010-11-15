@@ -50,7 +50,8 @@ class AvrBridge():
 			self.parseConfig(configFile)
 			
 	def run(self):
-		self.openDevice(self.portName)
+		if (self.port == None):
+			self.openDevice(self.portName)
 		self.io_thread.start()
 		
 	def shutdown(self):
