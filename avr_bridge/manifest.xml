@@ -1,0 +1,22 @@
+<package>
+  <description brief="avr_bridge">
+
+avr_bridge is meant to be bridge between an avr microcontroller and ROS.
+This is supposed to allow us to send arbitrary data structures over 
+serial and have them be published in ROS.  It features a avr C++ code 
+generator (gen_avr.py) , a serial to ros bridge (bridge_node.py), and a
+udev script system to automatically name your aduino the correct hardware
+device name.
+
+  </description>
+  <author>Adam Stambler, Cody Schafer, Phillip Quiza</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/avr_bridge</url>
+  <depend package="rospy"/>
+  <depend package="std_msgs"/>
+
+
+</package>
+
+

@@ -1,0 +1,47 @@
+avr_bridge
+
+by Adam Stambler
+Rutgers University
+
+
+avr_bridge is meant to be bridge between an avr microcontroller and ROS.
+We at Rutgers University have spent to much time repetivively writing
+communication code between our microcontrollers and the rest of our 
+robotic system.  This is supposed to allow us to send arbitrary data
+structures over serial and have them be published in ROS.
+
+There are 3 tools in this package.
+
+genAVR:
+   This tool generates the avrBridge c++ source code for the avr.  This 
+   is meant to be compiled with the your regular avr program.  It uses a
+   yaml config file to generate the appropriate code.
+
+bridge_node 
+   This node talks to the avr over the serial port and rebroadcasts the
+   data structure as ros messages on the appropriate topic. Right now, 
+
+getID
+   This tool, along with our udev script, allows the avr to automatically
+   name itself in your dev list.  This makes it easier to find the device
+   because you don't need to figure out which ttyUSB... is the device.
+   
+Right now, these tools depend are the Arduino serial libraries.  However, they could easily be ported another platform.  avr_bridge just needs a write and read byte to serial.
+   
+To begin, you need to make a yaml configuration file specifying what topics are being published and subscribed to, what is their type, and what is the name of the avr.  See the config directory for example configuration files.
+
+To generate the source code for the avr use :
+
+rosrun avr_bridge gen_avr.py <configuration file>  <destination directory>
+
+This generates the C++ library that you need to use for your avr project.
+
+
+To run bridge_node.py
+
+rosrun avr_bridge bridge_node.py <configuration file>
+
+
+To run getID.py
+rosrun avr_bridge getID.py <device path>
+

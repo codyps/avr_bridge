@@ -1,0 +1,11 @@
+port: Arduino
+publish:
+ odom: #topic name
+  type: nav_msgs/odometry 
+ hello:
+  type: std_msgs/String  
+subscribe:
+ cmd_vel: #subscribing topic name
+  type: geometry_msg/Twist
+ chatter:
+  type: std_msgs/String
