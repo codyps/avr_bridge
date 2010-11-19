@@ -26,6 +26,13 @@ getID
    name itself in your dev list.  This makes it easier to find the device
    because you don't need to figure out which ttyUSB... is the device.
    
+***************** WARNING*************** 
+AVR MICROCONTROLLERS DO NOT USE 64bit floats, double is aliased to float.
+As a result, float 64 does not work correclty.  Serialization and 
+deserialization are incorrect.
+******************************************
+
+
 Right now, these tools depend are the Arduino serial libraries.  However, they could easily be ported another platform.  avr_bridge just needs a write and read byte to serial.
    
 To begin, you need to make a yaml configuration file specifying what topics are being published and subscribed to, what is their type, and what is the name of the avr.  See the config directory for example configuration files.
