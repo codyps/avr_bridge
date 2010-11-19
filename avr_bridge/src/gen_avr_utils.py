@@ -70,8 +70,8 @@ def serialize_primative(f, buffer_addr, field):
 	if (field.is_array or field.type == 'string'):
 		f.write('offset += this->%s.serialize(%s + offset);\n'%(field.name, buffer_addr))
 	else:
-		f.write("*( (%s *) %s + offset)=  this->%s; \n"%(ctype, buffer_addr, field.name) )
-		f.write('offset += sizeof(%s);\n'%(ctype)) 
+		f.write("*( (%s *) (%s + offset))=  this->%s; \n"%(ctype, buffer_addr, field.name) )
+		f.write('offset += %d;\n'%(clen)) 
 		
 
 def deserialize_primative(f, buffer_addr, field):
@@ -85,8 +85,8 @@ def deserialize_primative(f, buffer_addr, field):
 	if (field.is_array or field.type == 'string'):
 		f.write('offset+= this->%s.deserialize(%s+offset);\n'%(field.name, buffer_addr))
 	else:
-		f.write( "this->%s = *( (%s *) %s + offset );\n"%(field.name, ctype, buffer_addr) )
-		f.write('offset += sizeof(%s);\n'%(ctype))
+		f.write( "this->%s = *( (%s *) (%s + offset) );\n"%(field.name, ctype, buffer_addr) )
+		f.write('offset += %d;\n'%(clen))
 				
 
 def write_header_file(f, msg_name, pkg, msg_spec):

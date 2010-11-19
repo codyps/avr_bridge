@@ -62,6 +62,7 @@ private:
 };
 extern Ros ros;
 
+void initRos();
 
 
 #endif /* ROS_H_ */

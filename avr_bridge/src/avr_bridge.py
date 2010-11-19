@@ -18,7 +18,7 @@ import time
 """
 At start up I need to read through the message definitions, and generate
 """
-debug_packets = False
+debug_packets = True
 
 class AvrBridge():
 	"""
@@ -195,9 +195,11 @@ class AvrBridge():
 		while not self.__done:
 			packet  = self.__getPacket()
 			packet_type, topic_tag, data_length, msg_data = packet
-			#print packet
+			#if (debug_packets):
+			#	print packet
 			if (self.is_valid_packet(packet)):
-				rospy.logdebug("Packet recieved " + str(packet))
+				if (debug_packets):
+					print "Packet recieved " + str(packet)
 				# packet types
 				# 0 avr is publishing
 				# 1 avr is subscribing
@@ -214,8 +216,8 @@ class AvrBridge():
 							msg.header.time = rospy.Time()
 						
 						self.publishers[topic].publish(msg)
-					except:
-						pass
+					except Exception as e:
+						print e
 					
 				if packet_type ==1:
 					topic = self.com_keys[topic_tag]
