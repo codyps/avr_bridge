@@ -13,17 +13,6 @@ Msg::Msg() {
 
 }
 
-uint16_t Msg::serialize(uint8_t * outbuffer){
-	return 0;
-}
-uint16_t Msg::deserialize(uint8_t* buffer){
-	return 0;
-}
-
-uint16_t Msg::bytes(){
-	return 0;
-}
-
 Msg::~Msg() {
 	// TODO Auto-generated destructor stub
 }
