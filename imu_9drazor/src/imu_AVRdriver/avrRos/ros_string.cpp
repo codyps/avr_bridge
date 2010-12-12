@@ -14,16 +14,19 @@ using namespace ROS;
 
 
 string::string(){
-
+	maxlength = 0;
 }
 
 string::string(uint16_t maxLength){
+	maxLength=0;
 	this->setMaxLength(maxLength);
 }
 
 void string::setMaxLength( uint16_t maxLength){
-	data = (char*) malloc(maxLength+1);
-	this->maxlength = maxLength;
+	if (this->maxlength ==0){
+		data = (char*) malloc(maxLength+1);
+		this->maxlength = maxLength;
+	}
 }
 
 string::string(char * str){
@@ -31,8 +34,13 @@ string::string(char * str){
 }
 
 void string::setString(char * str){
-	this->setMaxLength( strlen(str));
-	strcpy(data, str);
+	int l = strlen(str);
+
+	if (maxlength==0) setMaxLength(l);
+
+	l = (l > maxlength) ? maxlength : l;
+
+	strncpy(this->data,str,l);
 }
 
 uint16_t string::serialize(uint8_t * buffer){
@@ -44,13 +52,18 @@ uint16_t string::serialize(uint8_t * buffer){
 
 uint16_t string::deserialize(uint8_t* buffer){
 	uint32_t length;
-	if (length> maxlength){
-		free(data);
-		data = (char*) malloc(length+1);
-	}
 	memcpy(&length, buffer,4);
-	memcpy(data, buffer+4, length);
-	data[length] =0; //add null terminating charater
+	//deal with the overflow quietly, just take as much as possible
+	if (length> maxlength){
+		memcpy(data, buffer+4, maxlength);
+		data[maxlength] =0;
+	}
+	else{
+		memcpy(data, buffer+4, length);
+		data[length+1] =0;
+	}
+
+	 //add null terminating charater
 	return length+4;
 }
 

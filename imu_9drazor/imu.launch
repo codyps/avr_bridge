@@ -1,0 +1,8 @@
+<launch>
+	<node pkg="avr_bridge" type="bridge_node.py" name="imu_node" args="$(find imu_9drazor)/config/imu.yaml">
+		<remap from="imu" to="imu/imu_raw"/>
+	</node>
+	<node pkg="imu_9drazor" name="imu_msg_converter" type="msgConverter.py">
+		<remap from="imu_raw" to="imu/imu_raw"/>
+	</node>
+</launch>

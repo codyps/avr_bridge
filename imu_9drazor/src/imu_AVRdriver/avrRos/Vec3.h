@@ -17,9 +17,9 @@ class Vec3 : public Msg{
 	Vec3(uint8_t * data);
 	~Vec3();
 
-	uint16_t bytes();
-	uint16_t serialize(uint8_t * out_buffer);
-	uint16_t deserialize(uint8_t * data);
+	virtual uint16_t bytes();
+	virtual uint16_t serialize(uint8_t * out_buffer);
+	virtual uint16_t deserialize(uint8_t * data);
 
 	float x;
 	float y;

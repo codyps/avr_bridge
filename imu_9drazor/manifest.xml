@@ -1,0 +1,24 @@
+<package>
+  <description brief="imu_9drazor">
+This package is a driver for Sparkfun's 9D Razor imu:
+
+http://www.sparkfun.com/commerce/product_info.php?products_id=9623
+sku: SEN-09623
+
+It uses the rutgers-ros-pkg avr_bridge as a wrapper around the
+sf9domahrs code base from :
+http://code.google.com/p/sf9domahrs/
+
+  </description>
+  <author>Adam Stambler</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/imu_9drazor</url>
+  <depend package="rospy"/>
+  <depend package="sensor_msgs"/>
+  <depend package="tf"/>
+  <depend package="geometry_msgs"/>
+  <depend package="avr_bridge"/>
+</package>
+
+

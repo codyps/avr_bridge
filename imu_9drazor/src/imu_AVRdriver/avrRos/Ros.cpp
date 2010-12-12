@@ -64,12 +64,18 @@ void Ros::resetStateMachine(){
 	buffer_index = 0;
 	com_state = header_state;
 }
+
+
 void Ros::spin(){
 
 	int com_byte =  uart_getchar(ros_io);
 
 
 	while (com_byte != -1) {
+		//If the buffer index is about to over flow, or it hasnt been reset in a long time..
+		if (buffer_index > ROS_BUFFER_SIZE) buffer_index=0;
+		if ( (millis() - packet_start) > 30) {buffer_index=0; packet_start=millis();}
+
 		buffer[buffer_index] = com_byte;
 		buffer_index++;
 
@@ -77,11 +83,12 @@ void Ros::spin(){
 			if ( buffer_index == sizeof(packet_header)){
 				com_state = msg_data_state;
 				this->packet_data_left = header->msg_length;
+				packet_start = millis();
 			}
 		}
 		if (com_state ==  msg_data_state){
 			packet_data_left--;
-			if (packet_data_left <=0){
+			if (packet_data_left <0){
 				resetStateMachine();
 				if (header->packet_type ==255) this->getID();
 				if (header->packet_type==0){ //topic,
@@ -90,9 +97,10 @@ void Ros::spin(){
 						this->msgList[header->topic_tag]->deserialize(buffer+4);
 						//call the registered callback function
 						this->cb_list[header->topic_tag](this->msgList[header->topic_tag]);
+						//this->cb_list[0](this->msgList[0]);
+
 				}
 				if(header->packet_type == 1){ //service
-
 				}
 			}
 		}

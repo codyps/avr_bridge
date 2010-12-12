@@ -18,7 +18,7 @@ import time
 """
 At start up I need to read through the message definitions, and generate
 """
-debug_packets = True
+debug_packets = False
 
 class AvrBridge():
 	"""
@@ -273,13 +273,13 @@ class AvrBridge():
 		t = 0
 		self.sendAVR(std_msgs.msg.Empty(), rtype = 255, tag=0)
 		while (self.name == None):
-			time.sleep(0.03)
+			time.sleep(0.04)
 			t = t+1
-			if (t >5):
-				self.sendAVR(std_msgs.msg.Empty(), rtype = 255, tag=0)
 			if (t >10):
 				self.sendAVR(std_msgs.msg.Empty(), rtype = 255, tag=0)
-			if (t > 15):
+			if (t >15):
+				self.sendAVR(std_msgs.msg.Empty(), rtype = 255, tag=0)
+			if (t > 20):
 				return None
 		return self.name
 

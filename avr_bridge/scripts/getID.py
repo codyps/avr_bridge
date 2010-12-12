@@ -18,22 +18,35 @@ if __name__ == '__main__':
 	port = sys.argv[1]
 	#TODO   write something to check that this port exists
 	
-	try:
-		bridge = avr_bridge.AvrBridge()
-		bridge.openDevice(port)
-	except Exception as e:
-		print "could not access the port %s"%port
-		print e;
-		exit()
-	import time
-		
-	bridge.run()
-	#time.sleep(2)
-	avrID = bridge.getId()
-	print "Avr Device %s has been connect to %s"%(avrID, port)
-	print avrID
+	f = open('/home/asher/udev.log','w')
 	
-	bridge.shutdown()
+	f.write("Recieved argument %s"%sys.argv[1])
+	
+	f.close()
+	
+	print "testingArduino"
+	
+	#try:
+	#	bridge = avr_bridge.AvrBridge()
+#		bridge.openDevice(port)
+#	except Exception as e:
+#		#print "could not access the port %s"%port
+#		#print e;
+#		exit()
+#	import time
+#		
+#	bridge.run()
+#
+#	avrID = bridge.getId()
+#	
+#	if avrID == None:
+		#print "No avr_bridge device has been attached to ", sys.argv[1]
+#		print sys.argv[1]
+#	else:	 
+#		#print "Avr Device %s has been connect to %s"%(avrID, port)
+#		print avrID
+		
+#	bridge.shutdown()
 
 	
 

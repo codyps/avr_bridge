@@ -19,9 +19,9 @@ class RazorImu : public Msg{
 	RazorImu(uint8_t * data);
 	~RazorImu();
 
-	uint16_t bytes();
-	uint16_t serialize(uint8_t * out_buffer);
-	uint16_t deserialize(uint8_t * data);
+	virtual uint16_t bytes();
+	virtual uint16_t serialize(uint8_t * out_buffer);
+	virtual uint16_t deserialize(uint8_t * data);
 
 	imu_9drazor::Vec3 angular_velocity;
 	imu_9drazor::Vec3 linear_acceleration;
