@@ -132,9 +132,9 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.write('\t%s(uint8_t * data);\n'%msg_name);
 	f.write('\t~%s();\n'%msg_name);
 	f.write("""
-	uint16_t bytes();
-	uint16_t serialize(uint8_t * out_buffer);
-	uint16_t deserialize(uint8_t * data);
+	virtual uint16_t bytes();
+	virtual uint16_t serialize(uint8_t * out_buffer);
+	virtual uint16_t deserialize(uint8_t * data);
 
 """)
 	

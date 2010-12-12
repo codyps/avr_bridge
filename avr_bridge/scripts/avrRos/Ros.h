@@ -11,7 +11,7 @@
 #include "ros_string.h"
 #include "Msg.h"
 
-
+#define ROS_BUFFER_SIZE 300
 typedef void (*ros_cb)(Msg* msg);
 
 struct packet_header{
@@ -50,8 +50,10 @@ private:
 
 	packet_header * header;
 	int packet_data_left;
-	uint8_t buffer[300];
+	uint8_t buffer[ROS_BUFFER_SIZE];
 	uint16_t buffer_index;
+	unsigned long packet_start;
+
 	enum packet_state{
 		header_state , msg_data_state
 	} com_state;

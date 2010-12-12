@@ -28,7 +28,7 @@ if __name__ == '__main__':
 	import time
 		
 	bridge.run()
-	time.sleep(2)
+	#time.sleep(2)
 	avrID = bridge.getId()
 	print "Avr Device %s has been connect to %s"%(avrID, port)
 	print avrID
