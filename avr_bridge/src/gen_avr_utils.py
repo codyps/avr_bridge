@@ -31,7 +31,7 @@ primatives ={
 				'bool'  :   ('bool', 1) ,
 				'byte'  :   ('uint8_t', 1),
 				'int8'  :   ('uint8_t', 1),
-				'int16' :   ('int16_t', 1),
+				'int16' :   ('int16_t', 2),
 				'uint16':   ('uint16_t', 2),
 				'int32':    ('int32_t', 4),
 				'uint32':   ('uint32_t', 4),
