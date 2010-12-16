@@ -25,7 +25,11 @@ if __name__ == '__main__':
 		print "Publishing on Topic : ", topic
 	for topic in bridge.subscribers.keys():
 		print "Subscribing to Topic : ", topic
-	 
-	bridge.run()
-	rospy.spin()
-	bridge.shutdown()
+		
+	try:
+		bridge.run()
+		rospy.spin()
+	except Exception as e:
+		rospy.loginfo("Bridge Node failed with " + str(e))
+	finally:
+		bridge.shutdown()

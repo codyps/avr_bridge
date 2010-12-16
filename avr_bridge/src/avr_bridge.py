@@ -124,6 +124,8 @@ class AvrBridge():
 	
 		self.portName = self.config['port']
 		
+		
+		
 
 	def addSubscriber(self, topic, rtype):
 		"""Subscribes to the topic and does the bridge book keeping
@@ -219,6 +221,7 @@ class AvrBridge():
 						
 						self.publishers[topic].publish(msg)
 					except Exception as e:
+						print "Failed to deserialize topic ", topic
 						print e
 					
 				if packet_type ==1:
@@ -232,7 +235,7 @@ class AvrBridge():
 					name = std_msgs.msg.String()
 					name.deserialize(msg_data)
 					self.name = name.data
-			time.sleep(0.01)
+			time.sleep(0.005)
 		try:
 			self.port.close()
 		except:

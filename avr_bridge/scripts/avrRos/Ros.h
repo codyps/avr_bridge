@@ -24,7 +24,7 @@ typedef uint8_t Publisher;
 
 class Ros {
 public:
-	Ros(char * node_name);
+	Ros(char * node_name, uint8_t num_of_msg_types );
 	Publisher advertise(char* topic);
 
 	void publish(Publisher pub, Msg* msg);
@@ -43,6 +43,8 @@ private:
 	ros_cb cb_list[10];
 	Msg * msgList[10];
 
+	uint8_t NUM_OF_MSG_TYPES;
+
 	void getID();
 
 	char getTopicTag(char * topic); //Used to get the topic tag for its packet
@@ -52,13 +54,15 @@ private:
 	int packet_data_left;
 	uint8_t buffer[ROS_BUFFER_SIZE];
 	uint16_t buffer_index;
-	unsigned long packet_start;
+	unsigned long last_data;
 
 	enum packet_state{
 		header_state , msg_data_state
 	} com_state;
 
 	void resetStateMachine();
+
+	void recieveFail();
 
 
 };

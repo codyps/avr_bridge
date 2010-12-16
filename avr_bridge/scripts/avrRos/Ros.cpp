@@ -17,26 +17,27 @@ void initRos(){
 	//Set up the serial communicaton and wait a bit to make sure
 	//that the program and grab its id before we go into any other
 	//set up routines
-	Serial.begin(57600);
-	for (int i; i<100; i++) {ros.spin();delay(10);}
+	Serial1.begin(57600);
+	for (int i=0; i<100; i++) {ros.spin();delay(10);}
 }
 
 
 int uart_putchar(char c, FILE *stream)
 {
-	Serial.write(c);
+	Serial1.write(c);
   return 0;
 }
 
 int uart_getchar(FILE *stream)
 {
-	return Serial.read();
+	return Serial1.read();
 }
 
 FILE* ros_io = fdevopen(uart_putchar, uart_getchar);
 
 
-Ros::Ros(char * node_name) : name(node_name){
+Ros::Ros(char * node_name, uint8_t num_of_msg_types) : name(node_name),
+										NUM_OF_MSG_TYPES(num_of_msg_types){
 	// TODO Auto-generated constructor stub
 	//this->node_name = name;
 
@@ -63,8 +64,14 @@ void Ros::resetStateMachine(){
 	packet_data_left = 0;
 	buffer_index = 0;
 	com_state = header_state;
+	last_data = millis();
+
 }
 
+//This is called when the
+void Ros::recieveFail(){
+
+}
 
 void Ros::spin(){
 
@@ -73,17 +80,30 @@ void Ros::spin(){
 
 	while (com_byte != -1) {
 		//If the buffer index is about to over flow, or it hasnt been reset in a long time..
-		if (buffer_index > ROS_BUFFER_SIZE) buffer_index=0;
-		if ( (millis() - packet_start) > 30) {buffer_index=0; packet_start=millis();}
+		if (buffer_index >= ROS_BUFFER_SIZE) resetStateMachine();
+		if ( (millis() - last_data) > 15) {resetStateMachine();}
+
+		last_data = millis();
 
 		buffer[buffer_index] = com_byte;
 		buffer_index++;
 
 		if(com_state == header_state){
 			if ( buffer_index == sizeof(packet_header)){
-				com_state = msg_data_state;
-				this->packet_data_left = header->msg_length;
-				packet_start = millis();
+				int tag= header->topic_tag;
+
+				//check if the packet makes sense, ie, if the expected length is correct
+				if ( (tag < NUM_OF_MSG_TYPES) &&
+					 (this->msgList[tag]->bytes() == header->msg_length) &&
+					( (header->packet_type == 0) || (header->packet_type == 255) )){
+
+					com_state = msg_data_state;
+					 this->packet_data_left = header->msg_length;
+				}
+				else{
+					resetStateMachine();
+				}
+
 			}
 		}
 		if (com_state ==  msg_data_state){
@@ -97,8 +117,6 @@ void Ros::spin(){
 						this->msgList[header->topic_tag]->deserialize(buffer+4);
 						//call the registered callback function
 						this->cb_list[header->topic_tag](this->msgList[header->topic_tag]);
-						//this->cb_list[0](this->msgList[0]);
-
 				}
 				if(header->packet_type == 1){ //service
 				}
