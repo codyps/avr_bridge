@@ -235,7 +235,7 @@ class AvrBridge():
 					name = std_msgs.msg.String()
 					name.deserialize(msg_data)
 					self.name = name.data
-			time.sleep(0.005)
+			time.sleep(0.01)
 		try:
 			self.port.close()
 		except:
@@ -269,7 +269,7 @@ class AvrBridge():
 			print "Sending :  header " , pretty_data(header), "data " , pretty_data(msg_data)
 		self.port.write(header)
 		self.port.write(msg_data)
-		time.sleep(0.02)
+		time.sleep(0.012)
 		
 		
 	def getId(self):
