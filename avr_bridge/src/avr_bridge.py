@@ -247,7 +247,7 @@ class AvrBridge():
 		pass
 		
 	def subscriberCB(self, msg, t):
-		rospy.logdebug("topic : %s   \n msg:   %s"%(t,msg))
+		rospy.logdebug("topic : %s    msg:   %s"%(t,msg))
 		self.sendAVR(msg, topic = t, rtype =0)
 		
 	def sendAVR(self, msg, topic = None, rtype = None, tag = None):
@@ -302,11 +302,7 @@ def struct_test():
 		print "The message is ", msg
 		return msg
 	
-
-def name_test():
-	pass
-	#print bridge.__getPacket()
-
+	
 def pretty_data(data):
 	return [ d for d in data]
 	
