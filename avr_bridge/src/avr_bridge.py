@@ -39,7 +39,7 @@ class AvrBridge():
 		
 		self.io_thread = threading.Thread(target= self.__io_update)
 		self.io_thread.deamon = True
-		self.__done = False
+		self.__done = threading.Event()
 		
 		self.name = None
 		
@@ -55,7 +55,9 @@ class AvrBridge():
 		self.io_thread.start()
 		
 	def shutdown(self):
-		self.__done = True
+		self.__done.set()
+		self.io_thread.join()
+		self.port.close()
 		
 	def parseConfig(self, configFile):
 		""" takes a file-like object of the configuration file
@@ -195,7 +197,7 @@ class AvrBridge():
 	
 	def __io_update(self):
 		
-		while not self.__done:
+		while not self.__done.isSet():
 			packet  = self.__getPacket()
 			packet_type, topic_tag, data_length, msg_data = packet
 			#if (debug_packets):
@@ -234,10 +236,6 @@ class AvrBridge():
 					name.deserialize(msg_data)
 					self.name = name.data
 			time.sleep(0.01)
-		try:
-			self.port.close()
-		except:
-			pass
 
 			
 
