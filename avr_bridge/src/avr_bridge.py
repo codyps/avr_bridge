@@ -268,7 +268,6 @@ class AvrBridge():
 		self.port.write(header)
 		self.port.write(msg_data)
 		self.port.flush()
-		time.sleep(0.012)
 		
 		
 	def getId(self):
