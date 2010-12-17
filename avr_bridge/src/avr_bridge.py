@@ -133,6 +133,7 @@ class AvrBridge():
 			@param type  : topic type constructor
 			@param ID  :  ID tag used for topic identification in serial packet
 		"""
+		
 		self.subscribers[topic] = rospy.Subscriber(topic, rtype, lambda msg : self.subscriberCB(msg, topic))
 		self.topics[topic] = rtype
 		self.__addID(topic)
@@ -166,7 +167,7 @@ class AvrBridge():
 			port = '/dev/'+ port
 
 		self.port = serial.Serial(port, 57600, timeout=0.1)
-		time.sleep(1)
+		time.sleep(2)
 		self.portName = port
 		self.port.flushOutput()
 		self.port.flushInput()
@@ -268,6 +269,7 @@ class AvrBridge():
 			print "Sending :  header " , pretty_data(header), "data " , pretty_data(msg_data)
 		self.port.write(header)
 		self.port.write(msg_data)
+		self.port.flush()
 		time.sleep(0.012)
 		
 		
