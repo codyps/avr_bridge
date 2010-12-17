@@ -202,8 +202,7 @@ class AvrBridge():
 			#if (debug_packets):
 			#	print packet
 			if (self.is_valid_packet(packet)):
-				if (debug_packets):
-					print "Packet recieved " + str(packet)
+				rospy.logdebug("Packet recieved " + str(packet))
 				# packet types
 				# 0 avr is publishing
 				# 1 avr is subscribing
