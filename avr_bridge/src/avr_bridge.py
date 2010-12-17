@@ -152,7 +152,6 @@ class AvrBridge():
 			#		msg = packet.last_trans
 			#		self.send(name, msg)		
 			time.sleep(0.01)
-		self.port.close()
 			
 	def _check_io(self):
 		"""
@@ -174,17 +173,9 @@ class AvrBridge():
 		
 		msg_type, tag, msg_len  = self.header_struct.unpack(header)
 		
-		#if (msg_type == 255): #its an acknowledgement reciept
-		#	self.packets_tag[tag].markRecieved()
 		if (msg_type == 0 ) : # part of publish/broadcast msg
 			msg = self.packets_tag[tag].parsePacketData(msg_data)
-		#	self._sendAcknowledgement(msg_type, tag)
 			self.recieve_CBs[tag](msg)
-			
-	def _sendAcknowledgement(self, msg_type, tag):
-		header = self.header_struct(msg_type, tag, 0)
-		checksum = self._make_checksum(header)
-		self.port.write(header+checksum)
 		
 	def _get_packet(self):
 		"""
@@ -202,32 +193,8 @@ class AvrBridge():
 			return None
 		
 		packet_type, topic_tag, data_length = self.header_struct.unpack(header)
-		msg_data = self.port.read(data_length) #+1 for the check sum
-		#checksum = self.port.read(1) #+
-		return header+msg_data#, checksum
-	
-	def _check_packet(self, packet, checksum):
-		"""
-			Checks to see if the packet is valid
-			Uses checksum
-			@param packet : binary string of packet data, includes header
-			@param checksum : binary string of checksum
-		"""
-		computed_checksum = self._make_checksum(packet)
-		if computed_checksum == checksum:
-			return True
-		return False
-		
-	def _make_checksum(self, packet):
-		"""
-			Calculates a XOR checksum of 
-			each byte in the packet.
-			@param packet : packet string
-		"""
-		computed_checksum = 0
-		for c in packet:
-			computed_checksum ^= c
-		return str(computed_checksum)
+		msg_data = self.port.read(data_length) 
+		return header+msg_data
 	
 	def is_port_ok():
 		"""
@@ -255,14 +222,9 @@ class AvrBridge():
 		header_data = self.header_struct.pack(packet_type,tag,len(data))
 		
 		packet = header_data + data
-		#checksum = self._make_checksum(packet) #get the checsum
-		
-		#self.port.write(packet+checksum) #send!
-		try:
-			self.port.write(packet)
-		except Exception as e:
-			rospy.logdebug(str(e))
-		
+
+		self.port.write(packet)
+		self.port.flush()
 	
 	
 	
