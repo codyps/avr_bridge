@@ -179,8 +179,6 @@ class AvrBridge():
 		header = self.port.read(4)
 		
 		if not (len(header) == 4) :
-			self.port.flushOutput()
-			self.port.flushInput()
 			return None, None, 0, []
 		
 		packet_type, topic_tag, data_length = self.header_struct.unpack(header)
