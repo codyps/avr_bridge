@@ -57,10 +57,19 @@ class AvrBridge():
 			self.openDevice(self.portName)
 		self.io_thread.start()
 		
+		while not rospy.is_shutdown():
+			while (not self.queue.empty() ):
+				msg, t = self.queue.get()
+				rospy.logdebug("topic : %s    msg:   %s"%(t,msg))
+				self.sendAVR(msg, topic = t, rtype  = 0)
+			rospy.sleep(0.01)
+		self.shutdown()
+		
+		
 	def shutdown(self):
 		self.__done.set()
-		self.io_thread.join()
 		self.port.close()
+		self.io_thread.join()
 		
 	def parseConfig(self, configFile):
 		""" takes a file-like object of the configuration file
@@ -172,7 +181,7 @@ class AvrBridge():
 		if (port.find('/dev/') == -1):
 			port = '/dev/'+ port
 
-		self.port = serial.Serial(port, 57600, timeout=0.1)
+		self.port = serial.Serial(port, 57600)
 		time.sleep(2)
 		self.portName = port
 		self.port.flushOutput()
@@ -204,8 +213,7 @@ class AvrBridge():
 		while not self.__done.isSet():
 			packet  = self.__getPacket()
 			packet_type, topic_tag, data_length, msg_data = packet
-			#if (debug_packets):
-			#	print packet
+			
 			if (self.is_valid_packet(packet)):
 				rospy.logdebug("Packet recieved " + str(packet))
 				# packet types
@@ -239,11 +247,6 @@ class AvrBridge():
 					name = std_msgs.msg.String()
 					name.deserialize(msg_data)
 					self.name = name.data
-			while (not self.queue.empty() ):
-				msg, t = self.queue.get()
-				rospy.logdebug("topic : %s    msg:   %s"%(t,msg))
-				self.sendAVR(msg, topic = t, rtype  = 0)
-			time.sleep(0.01)
 
 			
 
@@ -272,7 +275,6 @@ class AvrBridge():
 		if debug_packets:
 			print "Sending :  header " , pretty_data(header), "data " , pretty_data(msg_data)
 		self.port.write(header+msg_data)
-		self.port.flush()
 		
 		
 	def getId(self):
