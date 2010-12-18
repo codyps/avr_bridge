@@ -26,6 +26,6 @@ if __name__ == '__main__':
 	for topic in bridge.subscribers.keys():
 		print "Subscribing to Topic : ", topic
 		
+	rospy.on_shutdown(bridge.shutdown)
 	bridge.run()
 	rospy.spin()
-	bridge.shutdown()
