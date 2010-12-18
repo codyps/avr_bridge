@@ -7,7 +7,7 @@
 
 import roslib; roslib.load_manifest('avr_bridge')
 import rospy
-import serial 
+import pyserial as serial 
 import struct
 import yaml
 import threading
@@ -181,7 +181,7 @@ class AvrBridge():
 		if (port.find('/dev/') == -1):
 			port = '/dev/'+ port
 
-		self.port = serial.Serial(port, 57600)
+		self.port = serial.Serial(port, 57600, timeout = 0.05, writeTimeout=0.05)
 		time.sleep(2)
 		self.portName = port
 		self.port.flushOutput()
@@ -272,9 +272,9 @@ class AvrBridge():
 		msg_length = len(msg_data)
 		
 		header = self.header_struct.pack(rtype,tag, msg_length)
-		if debug_packets:
-			print "Sending :  header " , pretty_data(header), "data " , pretty_data(msg_data)
-		self.port.write(header+msg_data)
+
+		n = self.port.write(header+msg_data)
+		rospy.logdebug("sent %d of %d bytes for topic %s", n, len(header+msg_data), topic)
 		
 		
 	def getId(self):

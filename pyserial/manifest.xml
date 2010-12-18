@@ -1,0 +1,15 @@
+<package>
+  <description brief="pyserial">
+
+     pyserial
+
+  </description>
+  <author>Adam Stambler</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pyserial</url>
+  <depend package="rospy"/>
+
+</package>
+
+
