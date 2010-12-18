@@ -45,6 +45,7 @@ class AvrBridge():
 		self.name = None
 		
 		self.queue = Queue.Queue()
+		self.slock = threading.Semphore()
 		
 		#packet structures
 		self.header_struct = struct.Struct('B B h') # packet_type topic_tag data_length
@@ -189,16 +190,21 @@ class AvrBridge():
 
 	
 	def __getPacket(self):
-		if not self.port.isOpen():
-			return None, None, 0, []
-		header = self.port.read(4)
-		
-		if not (len(header) == 4) :
-			return None, None, 0, []
-		
-		packet_type, topic_tag, data_length = self.header_struct.unpack(header)
-		msg_data = self.port.read(data_length)
-		return packet_type, topic_tag, data_length, msg_data
+		packet_type, topic_tag, data_length = None, None, 0, []
+		try:
+			self.slock.acquire()
+			
+			if self.port.isOpen():
+				header = self.port.read(4)
+			else:
+				header = ''
+			if (len(header) == 4) :			
+				packet_type, topic_tag, data_length = self.header_struct.unpack(header)
+				msg_data = self.port.read(data_length)
+		except:
+			rospy.logdebug("Exception in reading the serial port!")
+		finally:
+			self.slock.release()
 		
 	def is_valid_packet(self, packet):
 		packet_type, topic_tag, data_length, msg_data = packet
@@ -271,11 +277,16 @@ class AvrBridge():
 		msg_data = buffer.getvalue()
 		msg_length = len(msg_data)
 		
-		header = self.header_struct.pack(rtype,tag, msg_length)
-
-		n = self.port.write(header+msg_data)
-		rospy.logdebug("sent %d of %d bytes for topic %s", n, len(header+msg_data), topic)
-		
+		self.slock.acquire()
+		try:
+			header = self.header_struct.pack(rtype,tag, msg_length)
+			n = self.port.write(header+msg_data)
+			rospy.logdebug("sent %d of %d bytes for topic %s", n, len(header+msg_data), topic)
+		except:
+			rospy.logdebug("Write Timeout for topic %s", topic)
+		finally:
+			self.slock.release()
+			
 		
 	def getId(self):
 		t = 0
