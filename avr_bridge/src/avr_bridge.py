@@ -14,6 +14,7 @@ import threading
 import std_msgs.msg
 import StringIO
 import time
+import Queue
 
 """
 At start up I need to read through the message definitions, and generate
@@ -42,6 +43,8 @@ class AvrBridge():
 		self.__done = threading.Event()
 		
 		self.name = None
+		
+		self.queue = Queue.Queue()
 		
 		#packet structures
 		self.header_struct = struct.Struct('B B h') # packet_type topic_tag data_length
@@ -136,7 +139,8 @@ class AvrBridge():
 			@param ID  :  ID tag used for topic identification in serial packet
 		"""
 		
-		self.subscribers[topic] = rospy.Subscriber(topic, rtype, lambda msg : self.subscriberCB(msg, topic))
+		self.subscribers[topic] = rospy.Subscriber(topic, rtype, 
+							lambda msg : self.subscriberCB(msg, topic) )
 		self.topics[topic] = rtype
 		self.__addID(topic)
 
@@ -235,6 +239,10 @@ class AvrBridge():
 					name = std_msgs.msg.String()
 					name.deserialize(msg_data)
 					self.name = name.data
+			while (not self.queue.empty() ):
+				msg, t = self.queue.get()
+				rospy.logdebug("topic : %s    msg:   %s"%(t,msg))
+				self.sendAVR(msg, topic = t, rtype  = 0)
 			time.sleep(0.01)
 
 			
@@ -243,8 +251,8 @@ class AvrBridge():
 		pass
 		
 	def subscriberCB(self, msg, t):
-		rospy.logdebug("topic : %s    msg:   %s"%(t,msg))
-		self.sendAVR(msg, topic = t, rtype =0)
+		rospy.logdebug("putting msg %s into queue"%t)
+		self.queue.put((msg, t))
 		
 	def sendAVR(self, msg, topic = None, rtype = None, tag = None):
 		#
@@ -263,8 +271,7 @@ class AvrBridge():
 		header = self.header_struct.pack(rtype,tag, msg_length)
 		if debug_packets:
 			print "Sending :  header " , pretty_data(header), "data " , pretty_data(msg_data)
-		self.port.write(header)
-		self.port.write(msg_data)
+		self.port.write(header+msg_data)
 		self.port.flush()
 		
 		
