@@ -45,7 +45,7 @@ class AvrBridge():
 		self.name = None
 		
 		self.queue = Queue.Queue()
-		self.slock = threading.Semphore()
+		self.slock = threading.Semaphore()
 		
 		#packet structures
 		self.header_struct = struct.Struct('B B h') # packet_type topic_tag data_length
@@ -190,7 +190,7 @@ class AvrBridge():
 
 	
 	def __getPacket(self):
-		packet_type, topic_tag, data_length = None, None, 0, []
+		packet_type, topic_tag, data_length, msg_data= None, None, 0, []
 		try:
 			self.slock.acquire()
 			
@@ -205,6 +205,7 @@ class AvrBridge():
 			rospy.logdebug("Exception in reading the serial port!")
 		finally:
 			self.slock.release()
+		return packet_type, topic_tag, data_length, msg_data
 		
 	def is_valid_packet(self, packet):
 		packet_type, topic_tag, data_length, msg_data = packet

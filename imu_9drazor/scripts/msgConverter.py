@@ -46,6 +46,8 @@ if __name__ == '__main__':
 		imuMsg.orientation.y = q[1]
 		imuMsg.orientation.z = q[2]
 		imuMsg.orientation.w = q[3]
+		imuMsg.header.stamp rospy.Time.now()
+		imuMsg.header.frame_id = 'base_link'
 
 		pub.publish(imuMsg)
 	
