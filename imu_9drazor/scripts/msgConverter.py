@@ -25,9 +25,15 @@ if __name__ == '__main__':
 	rospy.init_node("razerIMU_msg_converter")
 	
 	imuMsg = Imu()
-	imuMsg.orientation_covariance = [0.2 , 0 , 0,   0 , 0.2, 0,   0 , 0 ,0.2]
-	imuMsg.angular_velocity_covariance = [0.2 , 0 , 0,   0 , 0.2, 0,   0 , 0 ,0.2]
-	imuMsg.linear_acceleration_covariance = [0.2 , 0 , 0,   0 , 0.2, 0,   0 , 0 ,0.2]
+	imuMsg.orientation_covariance = [999999 , 0 , 0,
+									 0, 9999999, 0,
+									 0, 0, 999999]
+	imuMsg.angular_velocity_covariance = [9999, 0 , 0,
+										  0 , 99999, 0, 
+										  0 , 0 ,  0.02]
+	imuMsg.linear_acceleration_covariance = [0.2 , 0 , 0,
+											 0 , 0.2,  0,
+											 0 , 0 ,   0.2]
 		
 	pub = rospy.Publisher('imu', Imu)
 	
@@ -46,7 +52,7 @@ if __name__ == '__main__':
 		imuMsg.orientation.y = q[1]
 		imuMsg.orientation.z = q[2]
 		imuMsg.orientation.w = q[3]
-		imuMsg.header.stamp rospy.Time.now()
+		imuMsg.header.stamp= rospy.Time.now()
 		imuMsg.header.frame_id = 'base_link'
 
 		pub.publish(imuMsg)

@@ -1,7 +1,7 @@
 port: callResponse
-publish:
- response:
-  type: std_msgs/String  
+publish: #list of published topics
+ response: #topic name
+  type: std_msgs/String  #msg type
 subscribe:
  call:
   type: std_msgs/String

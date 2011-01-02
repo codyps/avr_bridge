@@ -25,6 +25,9 @@ typedef uint8_t Publisher;
 class Ros {
 public:
 	Ros(char * node_name, uint8_t num_of_msg_types );
+	
+	void init_node();
+	
 	Publisher advertise(char* topic);
 
 	void publish(Publisher pub, Msg* msg);
@@ -35,13 +38,14 @@ public:
 	void send(uint8_t* data, uint16_t length, char packet_type, char topicID); //handles actually sending the data
 
 	ROS::string name;
-	uint8_t outBuffer[300];
 
 	~Ros();
 private:
 	char* topic_list[10];
 	ros_cb cb_list[10];
 	Msg * msgList[10];
+	uint8_t outBuffer[300];
+
 
 	uint8_t NUM_OF_MSG_TYPES;
 
