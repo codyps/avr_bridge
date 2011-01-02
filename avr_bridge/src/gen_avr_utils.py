@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 #
-
 """
-AVR code generator for ROS topics.  This generates AVR source code 
-so that the avr can communicate with the 
+AVR code generator for ROS topics.  This utilities are used to generate
+the avr source code to communicate with the ros avr bridge.  
 
-Converts ROS .msg files in a package into Python source code implementations.
+by Adam Stambler of Rutger University.
 
-arrays have an unsigned integer specifying the number of units in the array
+This software was written with support of a research grant (R01ES014717)
+ from the National Institute of Environmental Health Sciences.  
 
 """
 import roslib; roslib.load_manifest('avr_bridge')
@@ -17,7 +17,6 @@ import shutil
 import os
 import traceback
 
-# roslib.msgs contains the utilities for parsing .msg specifications. It is meant to have no rospy-specific knowledge
 import roslib.msgs 
 import roslib.packages 
 
@@ -73,7 +72,6 @@ def serialize_primative(f, buffer_addr, field):
 		f.write("*( (%s *) (%s + offset))=  this->%s; \n"%(ctype, buffer_addr, field.name) )
 		f.write('offset += %d;\n'%(clen)) 
 		
-
 def deserialize_primative(f, buffer_addr, field):
 	"""
 	Generate c code to deserialize a rosmsg field of type ctype from 
@@ -189,6 +187,14 @@ def deserialize_msg(f, msg_spec):
 
 
 def msg_size(f, msg_spec):
+	"""
+This function writes out the bytes() member function for a msg.  
+It iterates through the msg fields and extracts either their size if 
+they are a primative type, or calls the bytes of that msg.
+
+	@param f :  output file object
+	@param msg_spec : the msg_spec of the msg
+	"""
 	f.write('\n int msgSize=0;\n')
 	
 	for field in msg_spec.parsed_fields():
@@ -203,6 +209,13 @@ def msg_size(f, msg_spec):
 	
 
 def write_cpp(f, msg_name, pkg, msg_spec):
+	"""
+		Generates the msg cpp implementation file
+		@param f : output file object
+		@param msg_name : name of msg type
+		@param pkg : pkg that the message is found in
+		@param msg_spec : msg_spec object of the msg
+	"""
 	f.write('#include "%s.h"\n'%msg_name)
 	f.write('#include <stdio.h>\n')
 	
@@ -237,6 +250,10 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	
 
 class CGenerator():
+	"""
+	Class responsible for generating the c++ files from the yaml 
+	configuration file.
+	"""
 	def __init__(self):
 		self.types = [] #contains list of distinct types 
 						#each type will generate a .h and .cpp file
@@ -248,7 +265,9 @@ class CGenerator():
 		self.config = None
 		
 	def parseConfig(self, configFile):
-		#takes a file like object of configuration yaml
+		"""
+			Takes a file like object of the yaml configuration 
+		"""
 		
 		self.config = yaml.load(configFile)
 		

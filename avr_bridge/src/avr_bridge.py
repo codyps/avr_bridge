@@ -1,9 +1,13 @@
 #! /usr/bin/env python
-#http://www.ibm.com/developerworks/linux/tutorials/l-pysocks/section4.html
-# http://www.sics.se/~adam/uip/uip-1.0-refman/
-#  python structured data  http://www.doughellmann.com/PyMOTW/struct/
+"""
+avr_bridge utilties 
+by Adam Stambler of Rutger University.
 
-#This file contains the library files for 
+This software was written with support of a research grant (R01ES014717)
+ from the National Institute of Environmental Health Sciences.  
+
+
+"""
 
 import roslib; roslib.load_manifest('avr_bridge')
 import rospy
@@ -15,15 +19,15 @@ import std_msgs.msg
 import StringIO
 import time
 
-"""
-At start up I need to read through the message definitions, and generate
-"""
 debug_packets = False
 
 class Packet():
 	""" This packet class is in charge of keep track of 
-		transmission times, recieve/tranmission counts,
-	"""
+		transmission times, recieve/tranmission counts.
+		
+		
+	NOTE : in this version of the bridge, this tracking is not used
+			"""
 	def __init__(self, name, tag, msgConstructor):
 		self.name = name
 		
@@ -45,7 +49,7 @@ class Packet():
 		
 		self.msgConstructor = msgConstructor
 		
-	def parsePacketData(packet_data):
+	def parsePacketData(self, packet_data):
 		"""
 		Parses the recieved packet's data and 
 		its msg object containing that data.
@@ -55,12 +59,12 @@ class Packet():
 			@rtype :  ros smg
 		"""
 		msg = self.msgConstructor()
-		msg.deserialize(msg_data)
+		msg.deserialize(packet_data)
 		self.last_recv = msg
-		self.last_recv_time = time.Time()
+		self.last_recv_time = time.time()
 		return msg
 		
-	def getMsgData(ros_msg):
+	def getMsgData(self, ros_msg):
 		"""
 		Deserializes a ros msg and keeps track of the transmission
 		"""
@@ -69,23 +73,23 @@ class Packet():
 		msg_data = buffer.getvalue()
 		
 		self.last_trans = ros_msg
-		self.last_trans_time = time.Time()
+		self.last_trans_time = time.time()
 		
 		self._ackRecieved = False
 		return msg_data
 
-	def markRecieved()
+	def markRecieved(self):
 		"""
 			Marks that the last tranmissions was acknowledged
 		"""
 		self._ackRecieved = True
-	def retransmit()
+	def retransmit(self):
 		""" 
 			Checks to see if the last transmission should be resent
 			because of acknowledgement timeout
 		"""
 		if ( (not self._ackRecieved) and 
-			   ( (time.time() - self.last_trans_time) > 0.06):
+			   ( (time.time() - self.last_trans_time) > 0.06)):
 			self.retransmissions += 1
 			
 			if (self.retransmissions > self.__MAX_RETRANSMISSIONS):
@@ -100,6 +104,7 @@ class AvrBridge():
 	def __init__(self):
 		
 		self.port = None
+		self._name = None #the name that the node gives itself
 		
 		self.packets_name={} # packet types indexed by name
 		self.packets_tag ={} # packet types indexed by tag #
@@ -109,8 +114,11 @@ class AvrBridge():
 							# its cb is called
 							# keyed by tag
 		
-		self.io_thread = threading.Thread(target= self._check_io)
+		self.io_thread = threading.Thread(target= self._io_thread)
 		self.io_thread.deamon = True
+		
+		self._done = threading.Event()
+
 		
 		#packet structures
 		self.header_struct = struct.Struct('B B h') # packet_type topic_tag data_length
@@ -123,34 +131,43 @@ class AvrBridge():
 			@param msgConstructor : ros msg object
 			@param 
 		"""
-		tag = len(self.packets_name) 
+		tag = len(self.packets_name)
 		packet = Packet(topic,tag, msgConstructor)
 		self.packets_name[topic] =packet
 		self.packets_tag[tag] = packet
 		
 		self.recieve_CBs[tag] = recv_cb
-	def openPort(portName):
-		self.port = serial.Serial(port, 57600, timeout=0.1)
-		time.sleep(0.3)
-		self.portName = port
+	def openPort(self, portName):
+		print "Port name is ", portName
+		self.port = serial.Serial(portName, 57600, timeout=0.06)
+		time.sleep(0.5)
+		self.portName = portName
 		self.port.flushOutput()
 		self.port.flushInput() 
 		
 	def run(self):
+		"""
+		Starts the io thread for the avr bridge
+		"""
+		if self.port == None :
+			raise "Port not opened!"
 		self.io_thread.start()	
+		
 	def shutdown(self):
-		self.done = True	
-	def _io_thread(self):
-		while not self.done:
-		# check to see if there is new data
-			self._check_io()
+		"""
+		Turns off the io thread for avr_bridge and closes
+		the serial port file.  This method must be called in order 
+		for the program to exit cleanly.
+		"""
+		self._done.set()
+		self.io_thread.join()
+		self.port.close()
 			
-			#check to see if any packets failed and need
-			#to be retransmitted
-			#for name, packet in self.packet_name.iteritems():
-			#	if packet.retransmit():
-			#		msg = packet.last_trans
-			#		self.send(name, msg)		
+	def _io_thread(self):
+		print "Beginning Communication with", self.portName
+		while not self._done.isSet():
+		# check to see if there is new data
+			self._check_io()				
 			time.sleep(0.01)
 			
 	def _check_io(self):
@@ -160,16 +177,8 @@ class AvrBridge():
 		packet  = self._get_packet()
 		if packet == None :
 			return
-		
-		packet_data = packet # packet_data, checksum = packet
-		
-		#if not self._check_packet(packet_data, checksum) :
-		#	#if the checksum does not match
-		#	error_msg = "Checksum failed! :\n packet %s\n checksum %s\n"
-		#	rospy.logdebug(error_msg%(packet_data, checksum) )
-		#	return
-		
-		header, msg_data = packet_data[0:3], msg_data[4:]
+
+		header, msg_data = packet[0:4], packet[4:]
 		
 		msg_type, tag, msg_len  = self.header_struct.unpack(header)
 		
@@ -194,6 +203,8 @@ class AvrBridge():
 		
 		packet_type, topic_tag, data_length = self.header_struct.unpack(header)
 		msg_data = self.port.read(data_length) 
+		if len(msg_data) != data_length:
+			return None
 		return header+msg_data
 	
 	def is_port_ok():
@@ -225,7 +236,19 @@ class AvrBridge():
 
 		self.port.write(packet)
 		self.port.flush()
-	
+	def getId(self):
+		t = 0
+		self.send(std_msgs.msg.Empty(), "~getID")
+		while (self.name == None):
+			time.sleep(0.04)
+			t = t+1
+			if (t >10):
+				self.send(std_msgs.msg.Empty(), "~getID")
+			if (t >15):
+				self.send(std_msgs.msg.Empty(), "~getID")
+			if (t > 20):
+				return None
+		return self.name
 	
 	
 
@@ -250,6 +273,10 @@ class AvrBridgeNode():
 			@type configFileObj : file like object
 		"""
 		self.config = yaml.load(configFileObj)
+		
+		self.portName = self.config['port']
+		if not '/dev/' in self.portName:
+			self.portName = '/dev/'+ self.portName
 		
 		#subscribes must get their topic ID first
 		if self.config.has_key('subscribe'):
@@ -290,15 +317,33 @@ class AvrBridgeNode():
 				self.addPublisher(topic, msg)
 						 
 	def addSubscriber(self, topic, msgConstructor):
+		"""
+		Adds a subscription to the avr_bridge node.
+		@param  topic : name of topic being published
+		@param msgConstructor : msgConstructor for the topic's msg
+
+		"""
 		cb = lambda msg : self.bridge.send(topic, msg)
 		self.subscribers[topic] = rospy.Subscriber(topic, msgConstructor,cb)
 		
 	def addPublisher(self, topic, msgConstructor):
-		self.publishers[topic] = rospy.Pubisher(topic, msgConstructor)
+		"""
+		Adds a publisher to the bridge node
+		@param  topic : name of topic being published
+		@param msgConstructor : msgConstructor for the topic's msg
+		"""
+		self.publishers[topic] = rospy.Publisher(topic, msgConstructor)
 		cb = lambda (msg) : self.publishers[topic].publish(msg)
 		self.bridge.registerTopic(topic, msgConstructor, cb)
 	
 	def run(self):
+		"""
+		Start up basic bridge node
+		"""
+		self.bridge.openPort(self.portName)
 		self.bridge.run()
 		rospy.spin()
 		self.bridge.shutdown()
+
+
+
