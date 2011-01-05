@@ -36,12 +36,13 @@ public:
 
 	ROS::string name;
 	uint8_t outBuffer[300];
+	void initCommunication();
 
 	~Ros();
 private:
-	char* topic_list[10];
 	ros_cb cb_list[10];
 	Msg * msgList[10];
+
 
 	uint8_t NUM_OF_MSG_TYPES;
 
@@ -54,21 +55,15 @@ private:
 	int packet_data_left;
 	uint8_t buffer[ROS_BUFFER_SIZE];
 	uint16_t buffer_index;
-	unsigned long last_data;
 
 	enum packet_state{
 		header_state , msg_data_state
 	} com_state;
 
 	void resetStateMachine();
-
-	void recieveFail();
-
-
 };
-extern Ros ros;
 
-void initRos();
+extern Ros ros;
 
 
 #endif /* ROS_H_ */

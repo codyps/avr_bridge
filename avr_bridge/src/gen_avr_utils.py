@@ -130,9 +130,9 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.write('\t%s(uint8_t * data);\n'%msg_name);
 	f.write('\t~%s();\n'%msg_name);
 	f.write("""
-	virtual uint16_t bytes();
-	virtual uint16_t serialize(uint8_t * out_buffer);
-	virtual uint16_t deserialize(uint8_t * data);
+	uint16_t bytes();
+	uint16_t serialize(uint8_t * out_buffer);
+	uint16_t deserialize(uint8_t * data);
 
 """)
 	
@@ -330,8 +330,14 @@ class CGenerator():
 					print "The msg type is ", msgType
 					tpkg, tmsg = msgType.split('/')
 					self.addMsg(tpkg, tmsg)
+
+
 	def generateRos(self, folderPath):
-		
+""" 
+	This function generates to ros_generated.cpp file.
+	This file contains the getTopicTag implementation along with
+	the instantiation of the ros object.
+"""
 		f = open(folderPath+'/ros_generated.cpp', 'w');
 		
 		f.write("""

@@ -12,28 +12,16 @@
 
 
 #include <stdio.h>
-
-void initRos(){
-	//Set up the serial communicaton and wait a bit to make sure
-	//that the program and grab its id before we go into any other
-	//set up routines
-	Serial1.begin(57600);
-	for (int i=0; i<100; i++) {ros.spin();delay(10);}
-}
+#include "String.h"
+extern Publisher resp;
+extern std_msgs::String response_msg;
 
 
-int uart_putchar(char c, FILE *stream)
-{
-	Serial1.write(c);
-  return 0;
-}
+int ros_putchar(char c, FILE *stream);
+int ros_getchar(FILE *stream);
 
-int uart_getchar(FILE *stream)
-{
-	return Serial1.read();
-}
 
-FILE* ros_io = fdevopen(uart_putchar, uart_getchar);
+FILE* ros_io = fdevopen(ros_putchar, ros_getchar);
 
 
 Ros::Ros(char * node_name, uint8_t num_of_msg_types) : name(node_name),
@@ -44,9 +32,7 @@ Ros::Ros(char * node_name, uint8_t num_of_msg_types) : name(node_name),
 	this->packet_data_left = 0;
 	this->buffer_index =0;
 	this->header = (packet_header *) this->buffer;
-	//this->cb_list[0] = getID;
 	this->com_state = header_state;
-
 }
 
 void Ros::subscribe(char * topic, ros_cb funct, Msg* msg){
@@ -64,46 +50,78 @@ void Ros::resetStateMachine(){
 	packet_data_left = 0;
 	buffer_index = 0;
 	com_state = header_state;
-	last_data = millis();
-
 }
 
-//This is called when the
-void Ros::recieveFail(){
-
-}
-
+/*
 void Ros::spin(){
 
-	int com_byte =  uart_getchar(ros_io);
+	int com_byte =  ros_getchar(ros_io);
 
 
 	while (com_byte != -1) {
 		//If the buffer index is about to over flow, or it hasnt been reset in a long time..
 		if (buffer_index >= ROS_BUFFER_SIZE) resetStateMachine();
-		if ( (millis() - last_data) > 15) {resetStateMachine();}
-
-		last_data = millis();
 
 		buffer[buffer_index] = com_byte;
 		buffer_index++;
 
 		if(com_state == header_state){
 			if ( buffer_index == sizeof(packet_header)){
-				int tag= header->topic_tag;
-
-				//check if the packet makes sense, ie, if the expected length is correct
-				if ( (tag < NUM_OF_MSG_TYPES) &&
-					 (this->msgList[tag]->bytes() == header->msg_length) &&
-					( (header->packet_type == 0) || (header->packet_type == 255) )){
-
 					com_state = msg_data_state;
-					 this->packet_data_left = header->msg_length;
-				}
-				else{
-					resetStateMachine();
-				}
+					this->packet_data_left = header->msg_length;
+			}
+		}
+		if (com_state ==  msg_data_state){
+			packet_data_left--;
+			if (packet_data_left <0){
+				//ros.publish(resp, &response_msg);
+				ros.send(buffer+4,0,header->packet_type,header->topic_tag);
+				resetStateMachine();
+				if (header->packet_type ==255) this->getID();
+				if (header->packet_type==0){ //topic,
 
+					this->cb_list[0](this->msgList[0]);
+
+					//ie its a valid topic tag
+					//then deserialize the msg
+					this->msgList[header->topic_tag]->deserialize(buffer+4);
+					//call the registered callback function
+					this->cb_list[header->topic_tag](this->msgList[header->topic_tag]);
+				}
+				if(header->packet_type == 1){ //service
+				}
+			}
+		}
+
+		com_byte =  ros_getchar(ros_io);
+	}
+}
+
+
+*/
+
+void Ros::spin(){
+
+	int com_byte =  ros_getchar(ros_io);
+
+
+	while (com_byte != -1) {
+		buffer[buffer_index] = com_byte;
+		buffer_index++;
+
+		if(com_state == header_state){
+			if ( buffer_index == sizeof(packet_header)){
+				com_state = msg_data_state;
+				this->packet_data_left = header->msg_length;
+
+				if (com_state == msg_data_state){
+					if (!((header->packet_type == 0) || (header->packet_type == 255)))
+							resetStateMachine();
+					if (header->packet_type == 0){
+						if (header->topic_tag >= NUM_OF_MSG_TYPES) resetStateMachine();
+						if (header->msg_length>= 300) resetStateMachine();
+					}
+				}
 			}
 		}
 		if (com_state ==  msg_data_state){
@@ -119,14 +137,14 @@ void Ros::spin(){
 						this->cb_list[header->topic_tag](this->msgList[header->topic_tag]);
 				}
 				if(header->packet_type == 1){ //service
+
 				}
 			}
 		}
 
-		com_byte =  uart_getchar(ros_io);
+		com_byte =  ros_getchar(ros_io);
 	}
 }
-
 
 Publisher Ros::advertise(char* topic){
 

@@ -69,8 +69,8 @@ class Packet():
 		Deserializes a ros msg and keeps track of the transmission
 		"""
 		data_buffer = StringIO.StringIO()
-		ros_msg.serialize(buffer)
-		msg_data = buffer.getvalue()
+		ros_msg.serialize(data_buffer)
+		msg_data = data_buffer.getvalue()
 		
 		self.last_trans = ros_msg
 		self.last_trans_time = time.time()
@@ -104,7 +104,7 @@ class AvrBridge():
 	def __init__(self):
 		
 		self.port = None
-		self._name = None #the name that the node gives itself
+		self.name = None #the name that the node gives itself
 		
 		self.packets_name={} # packet types indexed by name
 		self.packets_tag ={} # packet types indexed by tag #
@@ -140,10 +140,11 @@ class AvrBridge():
 	def openPort(self, portName):
 		print "Port name is ", portName
 		self.port = serial.Serial(portName, 57600, timeout=0.06)
-		time.sleep(0.5)
+		time.sleep(0.75)
 		self.portName = portName
 		self.port.flushOutput()
 		self.port.flushInput() 
+		self.port.flush()
 		
 	def run(self):
 		"""
@@ -177,14 +178,25 @@ class AvrBridge():
 		packet  = self._get_packet()
 		if packet == None :
 			return
-
 		header, msg_data = packet[0:4], packet[4:]
-		
+		d = [ i for i in packet]
+		print "recieved ", d
 		msg_type, tag, msg_len  = self.header_struct.unpack(header)
 		
-		if (msg_type == 0 ) : # part of publish/broadcast msg
-			msg = self.packets_tag[tag].parsePacketData(msg_data)
-			self.recieve_CBs[tag](msg)
+		try:
+			if (msg_type == 0 ) : # part of publish/broadcast msg
+				msg = self.packets_tag[tag].parsePacketData(msg_data)
+				if (self.recieve_CBs[tag] != None):
+					self.recieve_CBs[tag](msg)
+			if (msg_type == 255): #getID message
+				name = std_msgs.msg.String()
+				name.deserialize(msg_data)
+				self.name = name.data
+		except Exception as e:
+			d = [ i for i in packet]
+			rospy.logdebug("Failed to deserialize packet %s", d)
+			#print  e
+			
 		
 	def _get_packet(self):
 		"""
@@ -198,10 +210,11 @@ class AvrBridge():
 
 		header = self.port.read(4)
 		
-		if not (len(header) == 4) :
+		if (len(header) != 4) :
 			return None
 		
 		packet_type, topic_tag, data_length = self.header_struct.unpack(header)
+		
 		msg_data = self.port.read(data_length) 
 		if len(msg_data) != data_length:
 			return None
@@ -215,7 +228,7 @@ class AvrBridge():
 			return False
 		return True
 		
-	def send(topic, msg):
+	def send(self, topic, msg):
 		"""
 			This function sends the message over the serial port
 			to the avr.
@@ -235,17 +248,20 @@ class AvrBridge():
 		packet = header_data + data
 
 		self.port.write(packet)
-		self.port.flush()
+		#self.port.flush()
+		d = [i for i in packet]
+		print "sending ", d
+		#rospy.logdebug("Sending packet %s", packet)
 	def getId(self):
 		t = 0
-		self.send(std_msgs.msg.Empty(), "~getID")
+		self.port.write(self.header_struct.pack(255,0,0))
 		while (self.name == None):
 			time.sleep(0.04)
 			t = t+1
 			if (t >10):
-				self.send(std_msgs.msg.Empty(), "~getID")
+				self.port.write(self.header_struct.pack(255,0,0))
 			if (t >15):
-				self.send(std_msgs.msg.Empty(), "~getID")
+				self.port.write(self.header_struct.pack(255,0,0))
 			if (t > 20):
 				return None
 		return self.name
@@ -280,6 +296,7 @@ class AvrBridgeNode():
 		
 		#subscribes must get their topic ID first
 		if self.config.has_key('subscribe'):
+			
 			for topic in self.config['subscribe']:
 				#import that msg's python module
 				msg_type = self.config['subscribe'][topic]['type']
@@ -325,6 +342,7 @@ class AvrBridgeNode():
 		"""
 		cb = lambda msg : self.bridge.send(topic, msg)
 		self.subscribers[topic] = rospy.Subscriber(topic, msgConstructor,cb)
+		self.bridge.registerTopic(topic, msgConstructor, None)
 		
 	def addPublisher(self, topic, msgConstructor):
 		"""
