@@ -12,6 +12,9 @@ boards to be first class ROS components.
   <url>http://ros.org/wiki/avr_bridge</url>
   <depend package="rospy"/>
   <depend package="std_msgs"/>
+  
+  <rosdep name="pyserial"/>
+  
 </package>
 
 
