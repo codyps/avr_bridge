@@ -1,61 +1,18 @@
 avr_bridge
 
-	avr_bridge is meant to simplify the use of an Arduino and avr processors in a ROS based robot by providing a partial ROS implementation in avr c++.    In hobbyist robotics, these microcontrollers are often used to read sensors and perform low level motor control.  Every time a robot needs to interface with an AVR board, a new communication system is written.  Typically they all use a usb-to-serial converter and either a custom binary or text based protocol.  AVR bridge  replaces these custom protocols with an automatically generated ROS communication stack that allows the AVR processors to directly publish or subscribe to ROS  topics.  
+by Adam Stambler of Rutgers University
 
-AVR bridge system  consists of three different programs.  An AVR c++ source generator, the resulting using avr program, and an avr_bridge python node which does the actual ROS publishing/subscribing.       The source generator and the bridge node both use a configuration file  to automatically generate the communication stack.   
+avr_bridge is meant to simplify the use of an Arduino and avr processors
+in a ROS based robot by providing a partial ROS implementation in avr c++.
+In hobbyist robotics, these microcontrollers are often used to read sensors
+and perform low level motor control. Every time a robot needs to interface
+with an AVR board, a new communication system is written. Typically they
+all use a usb-to-serial converter and either a custom binary or text 
+based protocol. AVR bridge replaces these custom protocols with an 
+automatically generated ROS communication stack that allows the AVR 
+processors to directly publish or subscribe to ROS topics. 
 
-Configuration file:
-Every avr_bridge program needs a yaml configuration file which specifies the port name, the subscriptions, and the publications that each avr handles.  This is an example configuration file:
+for tutorials and more information, see 
 
-port: /dev/ttyUSB0
-publish: #list of published topics
- response: #topic name
-  type: std_msgs/String  #msg type
-subscribe: #list of subscripitions 
- call:
-  type: std_msgs/String  
-
-gen_avr.py  :  avrRos source generator
-	The gen_avr script is an avr c++ msg generator.  To run gen_avr, perform
-
-rosrun avr_bridge gen_avr.py <config file> <avr src path>
-
-This command will generate an avrRos folder to be included in your avr project.  This folder has the base msg objects and the avr C++
-
-
-Custom Avr Program using avrRos:
-
-The generated avrRos folder provides a stripped down ROS implementation for 8-bit avr processors like arduino.  Specifically, it supports publishing and subscribing to ROS topics through an avr UART.  
-
-Overall, the avr api is meant to mirror the c++ api while being similar to the Arduino Api.  There is a global ros object which uses the global arduino Serial objects.  To start the node, ros.init_node()  must be called.  Right now, all this function does is set the serial configurations.  Next, for every subscription, a callback function and callback message must be registered using ros.subscribe:
-
-	void ros::subscribe(char* name, ros_cb funct, Msg* msg);
-
-The callback function is similar to the requirements for c++.  The call back function must be of type ros_cb :
-typedef void (*ros_cb)(Msg* msg);
-
-However, functions cannot be a member function of a class because avr_bridge does not use boost.
-
-As for msg objects, you must register a  pointer to a statically allocated msg objects so that ROS can work within an embedded system with very little memory.   The tight memory requirements and no operating system means that continually dynamically allocating large msg objects would fail.  (See http://nrqm.pbworks.com/Embedded+Object-Oriented+Programming for a more indepth explanation of the constraints when programming an embedded system )    This allows the programmer to set the maximum sizes for variable messages and minimize the number of copies of large message objects produced.   When the callback is called, the msg object contains the received data.  The msg argument can either be cast as the correct msg type, or the msg object can be made global and referenced from within the call back function.
-
-
-Publishing with avrRos.  To publish with AVR ros, you need to advertise your topic.  However, the net result of this advertising is simply to return a Publisher object which uniquely identifies the topic on which the avr is publishing.  This publisher object is passed to ros.pubisher( publisher, &msg) every time the system needs to be published.
-
-See the callResponse tutorial for a complete example.
-
-
-bridge_node.py :  a python ROS bridge node
-
-The bridge_node.py script is the actual node responsible for publishing and subscribing to the ros topics.  It uses pyserial to talk to the avr processor.  It expects to have the configuration yaml file as its first argument.  It automatically opens the avr port starts talking to the avr, and subscribes and publishes the messages.  To use run:
-
-rosrun avr_bridge bridge_node.py <config file>
-
-
-System Caveats :
-
-float64 UNSUPPORTED :  An 8bit microcontroller is not a PC.  It cannot handle 64bit floating point numbers and as a result, there is no compiler support for float64.  In the current avr_bridge system, there is no support for ROS messages that use float64.  It will correctly parse the other fields, but the float value will be garbage. 
-
-Every variable length message fields  need to be initialized with a maximum length.  This includes any arrays and strings.  To do so,  use msg.setMaxLength( length ) .  Avr microcontrollers have a very small RAM which cannot handle heavy dynamical allocation.  Therefore, it is up to the program designer to specify this max length .  All data past this max length is ignored.  For a more indepth explanation c++ programming with embedded processor constraints, see   http://nrqm.pbworks.com/Embedded+Object-Oriented+Programming
-
-
+www.ros.org/wiki/avr_bridge
 
