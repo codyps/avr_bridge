@@ -2,12 +2,12 @@
 #
 
 """
-AVR code generator for ROS topics.  This generates AVR source code 
-so that the avr can communicate with the 
+AVR code generator for ROS topics.   
 
-Converts ROS .msg files in a package into Python source code implementations.
+by Adam Stambler of Rutger University.
 
-arrays have an unsigned integer specifying the number of units in the array
+This software was written with support of a research grant (R01ES014717)
+ from the National Institute of Environmental Health Sciences.  
 
 """
 import roslib; roslib.load_manifest('avr_bridge')
@@ -16,15 +16,6 @@ import sys
 import shutil
 import os
 import traceback
-
-# roslib.msgs contains the utilities for parsing .msg specifications. It is meant to have no rospy-specific knowledge
-import roslib.msgs 
-import roslib.packages 
-
-
-import roslib.genpy 
-import yaml
-import StringIO
 
 from gen_avr_utils import *
 

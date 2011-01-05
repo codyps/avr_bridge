@@ -20,12 +20,11 @@ if __name__ == '__main__':
 	
 	configFile = sys.argv[1]
 	
-	bridge = avr_bridge.AvrBridge(open(configFile,'r'))
+	bridge = avr_bridge.AvrBridgeNode()
+	bridge.loadConfig(open(configFile, 'r'))
 	for topic in bridge.publishers.keys():
 		print "Publishing on Topic : ", topic
 	for topic in bridge.subscribers.keys():
 		print "Subscribing to Topic : ", topic
-		
-	rospy.on_shutdown(bridge.shutdown)
+
 	bridge.run()
-	rospy.spin()
