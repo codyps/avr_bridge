@@ -22,8 +22,8 @@ public:
 	uint16_t serialize(uint8_t* buffer);
 	uint16_t deserialize(uint8_t* buffer);
 	char operator[](int i){ return data[i];};
-	char* operator& (){ return data;};
 	void setMaxLength( uint16_t maxLength);
+	char* operator*(){ return data; };
 
 private:
 	char* data;
