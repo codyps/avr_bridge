@@ -1,4 +1,5 @@
-port: Arduino
+port: /dev/ttyUSB0
+name : Arduino
 publish:
  odom: #topic name
   type: nav_msgs/odometry 

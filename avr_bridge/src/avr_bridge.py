@@ -11,7 +11,7 @@ This software was written with support of a research grant (R01ES014717)
 
 import roslib; roslib.load_manifest('avr_bridge')
 import rospy
-import pyserial as serial 
+import serial 
 import struct
 import yaml
 import threading
@@ -193,7 +193,7 @@ class AvrBridge():
 			return
 		header, msg_data = packet[0:4], packet[4:]
 		d = [ i for i in packet]
-		print "recieved ", d
+		#print "recieved ", d
 		msg_type, tag, msg_len  = self.header_struct.unpack(header)
 		
 		try:
@@ -263,7 +263,7 @@ class AvrBridge():
 		self.port.write(packet)
 		#self.port.flush()
 		d = [i for i in packet]
-		print "sending ", d
+		#print "sending ", d
 		#rospy.logdebug("Sending packet %s", packet)
 	def getId(self):
 		t = 0

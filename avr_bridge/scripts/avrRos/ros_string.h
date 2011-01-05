@@ -23,7 +23,7 @@ public:
 	uint16_t deserialize(uint8_t* buffer);
 	char operator[](int i){ return data[i];};
 	void setMaxLength( uint16_t maxLength);
-	char* operator*(){ return data; };
+	char* getRawString(){return data;};
 
 private:
 	char* data;

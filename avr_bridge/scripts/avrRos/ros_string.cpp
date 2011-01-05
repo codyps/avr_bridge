@@ -26,6 +26,7 @@ void string::setMaxLength( uint16_t maxLength){
 	if (this->maxlength <=0){
 		data = (char*) malloc(maxLength+1);
 		this->maxlength = maxLength;
+		data[0]=0;
 	}
 }
 
@@ -62,7 +63,7 @@ uint16_t string::deserialize(uint8_t* buffer){
 	}
 	else{
 		memcpy(data, buffer+4, length);
-		data[length+1] =0;
+		data[length] =0;
 	}
 
 

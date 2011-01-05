@@ -38,7 +38,6 @@ public:
 	void send(uint8_t* data, uint16_t length, char packet_type, char topicID); //handles actually sending the data
 
 	ROS::string name;
-	uint8_t outBuffer[300];
 	void initCommunication();
 
 	~Ros();
