@@ -1,0 +1,4 @@
+This example is set up for an arduino board.  The avr source code is
+provided as an eclipse project.  Simply compile and load the hex file 
+onto the arduino and you are set to communicate with your Arduino or 
+avr project using ROS!
