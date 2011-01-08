@@ -1,5 +1,5 @@
 <package>
-  <description brief="imu_9drazor">
+  <description brief="ROS driver for Sparkfun's 9D Razor imu">
 This package is a driver for Sparkfun's 9D Razor imu:
 
 http://www.sparkfun.com/commerce/product_info.php?products_id=9623
@@ -8,6 +8,8 @@ sku: SEN-09623
 It uses the rutgers-ros-pkg avr_bridge as a wrapper around the
 sf9domahrs code base from :
 http://code.google.com/p/sf9domahrs/
+
+
 
   </description>
   <author>Adam Stambler</author>

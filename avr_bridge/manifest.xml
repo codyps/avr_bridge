@@ -1,8 +1,8 @@
 <package>
-  <description brief="avr_bridge">
+  <description brief="Allows avr processor to directly publish or subscribe to ros topics">
 
 avr_bridge allows the AVR processors to directly publish or subscribe to 
-ROS  topics.  This allows everything from Arduino's to custom robot 
+ROS  topics.  This allows everything from Arduinos to custom robot 
 boards to be first class ROS components.
 
   </description>
