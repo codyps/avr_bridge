@@ -84,6 +84,24 @@ void Ros::resetStateMachine()
 	com_state = header_state;
 }
 
+void Ros::process_pkt()
+{
+	switch(header->packet_type) {
+	case PT_GETID:
+		this->getID();
+		break;
+	case PT_TOPIC:
+		//ie its a valid topic tag
+		//then deserialize the msg
+		this->msgList[header->topic_tag]->deserialize(buffer+4);
+		//call the registered callback function
+		this->cb_list[header->topic_tag](this->msgList[header->topic_tag]);
+		break;
+	case PT_SERVICE:
+		break;
+	}
+}
+
 void Ros::spin()
 {
 	int com_byte =  ros_getchar(ros_io);
@@ -111,20 +129,7 @@ void Ros::spin()
 			packet_data_left--;
 			if (packet_data_left <0){
 				resetStateMachine();
-				switch(header->packet_type) {
-				case PT_GETID:
-					this->getID();
-					break;
-				case PT_TOPIC:
-					//ie its a valid topic tag
-					//then deserialize the msg
-					this->msgList[header->topic_tag]->deserialize(buffer+4);
-					//call the registered callback function
-					this->cb_list[header->topic_tag](this->msgList[header->topic_tag]);
-					break;
-				case PT_SERVICE:
-					break;
-				}
+				process_pkt();
 			}
 		}
 

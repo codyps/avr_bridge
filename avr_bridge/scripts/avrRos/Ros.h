@@ -91,10 +91,11 @@ private:
 	uint8_t NUM_OF_MSG_TYPES;
 
 	void getID();
+	void process_pkt();
 
 	char getTopicTag(char *topic); //Used to get the topic tag for its packet
-	//variables for handling incoming packets
 
+	//variables for handling incoming packets
 	packet_header *header;
 	int packet_data_left;
 	uint8_t buffer[ROS_BUFFER_SIZE];
