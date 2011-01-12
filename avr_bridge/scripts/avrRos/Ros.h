@@ -50,11 +50,11 @@
 #define ROS_BUFFER_SIZE (UINT8_MAX + 1)
 typedef void (*ros_cb)(Msg* msg);
 
-struct packet_header{
+struct packet_header {
 		uint8_t packet_type;
 		uint8_t topic_tag;
 		uint16_t msg_length;
-	};
+};
 
 typedef uint8_t Publisher;
 
@@ -82,8 +82,6 @@ private:
 	Msg * msgList[10];
 	uint8_t outBuffer[UINT8_MAX + 1];
 
-
-
 	uint8_t NUM_OF_MSG_TYPES;
 
 	void getID();
@@ -96,7 +94,7 @@ private:
 	uint8_t buffer[ROS_BUFFER_SIZE];
 	uint8_t buffer_index;
 
-	enum packet_state{
+	enum packet_state {
 		header_state , msg_data_state
 	} com_state;
 
