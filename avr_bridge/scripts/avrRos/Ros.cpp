@@ -123,13 +123,13 @@ void Ros::spin()
 				com_state = msg_data_state;
 				this->packet_data_left = header->msg_length;
 
-				if (com_state == msg_data_state){
-					if (!((header->packet_type == PT_TOPIC) || (header->packet_type == PT_GETID)))
-							resetStateMachine();
-					if (header->packet_type == PT_TOPIC){
-						if (header->topic_tag >= NUM_OF_MSG_TYPES) resetStateMachine();
-						if (header->msg_length>= ROS_BUFFER_SIZE) resetStateMachine();
-					}
+				if (! ( (header->packet_type == PT_TOPIC)
+				         || (header->packet_type == PT_GETID) ) )
+						resetStateMachine();
+				if (header->packet_type == PT_TOPIC) {
+					if ( (header->topic_tag >= NUM_OF_MSG_TYPES)
+					     || (header->msg_length>= ROS_BUFFER_SIZE) )
+					     resetStateMachine();
 				}
 			}
 		}
