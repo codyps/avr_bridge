@@ -61,8 +61,8 @@ Ros::Ros(char * node_name, uint8_t num_of_msg_types)
 	, packet_data_left(0)
 	, buffer_index(0)
 	, header(buffer)
-	, com_state(header_state){
-}
+	, com_state(header_state)
+{}
 
 void Ros::subscribe(char * topic, ros_cb funct, Msg* msg){
 	int tag = getTopicTag(topic);
@@ -73,7 +73,7 @@ void Ros::subscribe(char * topic, ros_cb funct, Msg* msg){
 void Ros::publish(Publisher pub, Msg* msg){
 	uint16_t bytes = msg->serialize(this->outBuffer);
 		this->send(outBuffer,bytes,0,pub);
-	}
+}
 
 void Ros::resetStateMachine(){
 	packet_data_left = 0;
