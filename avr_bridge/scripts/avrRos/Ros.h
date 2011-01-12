@@ -64,7 +64,7 @@ public:
 
 	Publisher advertise(char* topic);
 	void publish(Publisher pub, Msg *msg);
-	void subscribe(char* name, ros_cb funct, Msg *msg);
+	void subscribe(char *name, ros_cb funct, Msg *msg);
 
 	void spin();
 
@@ -72,7 +72,6 @@ public:
 	 * argument ordering is not natural. The name `send` is also unclear. */
 	void send(uint8_t *data, uint16_t length, char packet_type, char topicID);
 
-	ROS::string name;
 
 	/* XXX: these do not exsist in Ros.cpp, should they be removed? */
 	void init_node();
@@ -80,6 +79,8 @@ public:
 
 	~Ros();
 private:
+	ROS::string name;
+
 	ros_cb cb_list[10];
 	Msg *msgList[10];
 	uint8_t outBuffer[UINT8_MAX + 1];
@@ -91,7 +92,7 @@ private:
 	char getTopicTag(char *topic); //Used to get the topic tag for its packet
 	//variables for handling incoming packets
 
-	packet_header * header;
+	packet_header *header;
 	int packet_data_left;
 	uint8_t buffer[ROS_BUFFER_SIZE];
 	uint8_t buffer_index;
