@@ -48,7 +48,7 @@
 #endif
 
 #define ROS_BUFFER_SIZE (UINT8_MAX + 1)
-typedef void (*ros_cb)(Msg* msg);
+typedef void (*ros_cb)(Msg *msg);
 
 struct packet_header {
 		uint8_t packet_type;
@@ -60,15 +60,15 @@ typedef uint8_t Publisher;
 
 class Ros {
 public:
-	Ros(char * node_name, uint8_t num_of_msg_types);
+	Ros(char *node_name, uint8_t num_of_msg_types);
 
 	Publisher advertise(char* topic);
-	void publish(Publisher pub, Msg* msg);
-	void subscribe(char* name, ros_cb funct, Msg* msg);
+	void publish(Publisher pub, Msg *msg);
+	void subscribe(char* name, ros_cb funct, Msg *msg);
 
 	void spin();
 
-	void send(uint8_t* data, uint16_t length, char packet_type, char topicID); //handles actually sending the data
+	void send(uint8_t *data, uint16_t length, char packet_type, char topicID); //handles actually sending the data
 
 	ROS::string name;
 
@@ -78,14 +78,14 @@ public:
 	~Ros();
 private:
 	ros_cb cb_list[10];
-	Msg * msgList[10];
+	Msg *msgList[10];
 	uint8_t outBuffer[UINT8_MAX + 1];
 
 	uint8_t NUM_OF_MSG_TYPES;
 
 	void getID();
 
-	char getTopicTag(char * topic); //Used to get the topic tag for its packet
+	char getTopicTag(char *topic); //Used to get the topic tag for its packet
 	//variables for handling incoming packets
 
 	packet_header * header;
@@ -94,7 +94,8 @@ private:
 	uint8_t buffer_index;
 
 	enum packet_state {
-		header_state , msg_data_state
+		header_state,
+		msg_data_state
 	} com_state;
 
 	void resetStateMachine();
