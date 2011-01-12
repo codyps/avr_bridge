@@ -55,15 +55,13 @@ int ros_getchar(FILE *stream);
 FILE* ros_io = fdevopen(ros_putchar, ros_getchar);
 
 
-Ros::Ros(char * node_name, uint8_t num_of_msg_types) : name(node_name),
-										NUM_OF_MSG_TYPES(num_of_msg_types){
-	// TODO Auto-generated constructor stub
-	//this->node_name = name;
-
-	this->packet_data_left = 0;
-	this->buffer_index =0;
-	this->header = (packet_header *) this->buffer;
-	this->com_state = header_state;
+Ros::Ros(char * node_name, uint8_t num_of_msg_types)
+	: name(node_name)
+	, NUM_OF_MSG_TYPES(num_of_msg_types)
+	, packet_data_left(0)
+	, buffer_index(0)
+	, header(buffer)
+	, com_state(header_state){
 }
 
 void Ros::subscribe(char * topic, ros_cb funct, Msg* msg){
