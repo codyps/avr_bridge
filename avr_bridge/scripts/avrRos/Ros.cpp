@@ -42,6 +42,11 @@
 
 #include <stdio.h>
 #include "String.h"
+
+/* XXX: where are these defined? why aren't they defined as externs in
+ * a header file? What are they, anyhow?
+ * Both appear unused. Remove?
+ */
 extern Publisher resp;
 extern std_msgs::String response_msg;
 
