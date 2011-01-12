@@ -119,7 +119,7 @@ void Ros::spin()
 		buffer_index++;
 
 		if(com_state == header_state){
-			if ( buffer_index == sizeof(packet_header)){
+			if (buffer_index == sizeof(PktHeader)) {
 				com_state = msg_data_state;
 				this->packet_data_left = header->msg_length;
 

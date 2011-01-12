@@ -50,7 +50,7 @@
 #define ROS_BUFFER_SIZE (UINT8_MAX + 1)
 typedef void (*ros_cb)(Msg *msg);
 
-struct packet_header {
+struct PktHeader {
 		uint8_t packet_type;
 #define PT_TOPIC	(0)
 #define PT_SERVICE	(1)
@@ -96,7 +96,7 @@ private:
 	char getTopicTag(char *topic); //Used to get the topic tag for its packet
 
 	//variables for handling incoming packets
-	packet_header *header;
+	PktHeader *header;
 	int packet_data_left;
 	uint8_t buffer[ROS_BUFFER_SIZE];
 	uint8_t buffer_index;
