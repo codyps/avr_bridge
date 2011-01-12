@@ -41,7 +41,13 @@
 #include "ros_string.h"
 #include "Msg.h"
 
-#define ROS_BUFFER_SIZE 300
+#include <stdint.h>
+
+#ifndef UINT8_MAX
+#define UINT8_MAX 0xff
+#endif
+
+#define ROS_BUFFER_SIZE (UINT8_MAX + 1)
 typedef void (*ros_cb)(Msg* msg);
 
 struct packet_header{
@@ -74,7 +80,7 @@ public:
 private:
 	ros_cb cb_list[10];
 	Msg * msgList[10];
-	uint8_t outBuffer[300];
+	uint8_t outBuffer[UINT8_MAX + 1];
 
 
 
@@ -88,7 +94,7 @@ private:
 	packet_header * header;
 	int packet_data_left;
 	uint8_t buffer[ROS_BUFFER_SIZE];
-	uint16_t buffer_index;
+	uint8_t buffer_index;
 
 	enum packet_state{
 		header_state , msg_data_state
