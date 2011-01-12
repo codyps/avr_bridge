@@ -52,6 +52,9 @@ typedef void (*ros_cb)(Msg *msg);
 
 struct packet_header {
 		uint8_t packet_type;
+#define PT_TOPIC	(0)
+#define PT_SERVICE	(1)
+#define PT_GETID	(0xff)
 		uint8_t topic_tag;
 		uint16_t msg_length;
 };
