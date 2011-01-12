@@ -111,16 +111,19 @@ void Ros::spin()
 			packet_data_left--;
 			if (packet_data_left <0){
 				resetStateMachine();
-				if (header->packet_type == PT_GETID) this->getID();
-				if (header->packet_type == PT_TOPIC) { //topic,
-						//ie its a valid topic tag
-						//then deserialize the msg
-						this->msgList[header->topic_tag]->deserialize(buffer+4);
-						//call the registered callback function
-						this->cb_list[header->topic_tag](this->msgList[header->topic_tag]);
-				}
-				if(header->packet_type == PT_SERVICE){ //service
-
+				switch(header->packet_type) {
+				case PT_GETID:
+					this->getID();
+					break;
+				case PT_TOPIC:
+					//ie its a valid topic tag
+					//then deserialize the msg
+					this->msgList[header->topic_tag]->deserialize(buffer+4);
+					//call the registered callback function
+					this->cb_list[header->topic_tag](this->msgList[header->topic_tag]);
+					break;
+				case PT_SERVICE:
+					break;
 				}
 			}
 		}
