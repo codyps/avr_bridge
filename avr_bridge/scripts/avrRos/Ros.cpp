@@ -128,7 +128,7 @@ void Ros::spin()
 							resetStateMachine();
 					if (header->packet_type == PT_TOPIC){
 						if (header->topic_tag >= NUM_OF_MSG_TYPES) resetStateMachine();
-						if (header->msg_length>= 300) resetStateMachine();
+						if (header->msg_length>= ROS_BUFFER_SIZE) resetStateMachine();
 					}
 				}
 			}
