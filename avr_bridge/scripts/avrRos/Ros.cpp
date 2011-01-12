@@ -98,9 +98,9 @@ void Ros::spin()
 				this->packet_data_left = header->msg_length;
 
 				if (com_state == msg_data_state){
-					if (!((header->packet_type == 0) || (header->packet_type == 255)))
+					if (!((header->packet_type == PT_TOPIC) || (header->packet_type == PT_GETID)))
 							resetStateMachine();
-					if (header->packet_type == 0){
+					if (header->packet_type == PT_TOPIC){
 						if (header->topic_tag >= NUM_OF_MSG_TYPES) resetStateMachine();
 						if (header->msg_length>= 300) resetStateMachine();
 					}
@@ -111,15 +111,15 @@ void Ros::spin()
 			packet_data_left--;
 			if (packet_data_left <0){
 				resetStateMachine();
-				if (header->packet_type ==255) this->getID();
-				if (header->packet_type==0){ //topic,
+				if (header->packet_type == PT_GETID) this->getID();
+				if (header->packet_type == PT_TOPIC) { //topic,
 						//ie its a valid topic tag
 						//then deserialize the msg
 						this->msgList[header->topic_tag]->deserialize(buffer+4);
 						//call the registered callback function
 						this->cb_list[header->topic_tag](this->msgList[header->topic_tag]);
 				}
-				if(header->packet_type == 1){ //service
+				if(header->packet_type == PT_SERVICE){ //service
 
 				}
 			}
@@ -156,7 +156,7 @@ void Ros::send(uint8_t * data, uint16_t length, char packet_type, char topicID)
 void Ros::getID()
 {
 	uint16_t size = this->name.serialize(ros.outBuffer);
-	this->send(outBuffer, size, 255, 0);
+	this->send(outBuffer, size, PT_GETID, 0);
 }
 
 
