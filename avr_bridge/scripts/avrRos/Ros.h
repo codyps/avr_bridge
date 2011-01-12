@@ -68,10 +68,13 @@ public:
 
 	void spin();
 
-	void send(uint8_t *data, uint16_t length, char packet_type, char topicID); //handles actually sending the data
+	/* XXX: the types are possibly wrong (or at least misleading), and the
+	 * argument ordering is not natural. The name `send` is also unclear. */
+	void send(uint8_t *data, uint16_t length, char packet_type, char topicID);
 
 	ROS::string name;
 
+	/* XXX: these do not exsist in Ros.cpp, should they be removed? */
 	void init_node();
 	void initCommunication();
 
