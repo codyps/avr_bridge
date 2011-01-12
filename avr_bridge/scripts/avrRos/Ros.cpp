@@ -45,11 +45,17 @@
 extern Publisher resp;
 extern std_msgs::String response_msg;
 
-
+/* XXX: there are 3 ways to go about giving class Ros the ability to send
+ * data over the wire:
+ *  1) use hard coded function names which (for some inexplicable
+ *     reason, use the stdio style even though it is uneeded)
+ *  2) pass a (FILE *) to the Ros constructor.
+ *  3) pass a class implimenting a send_packet method of some sort.
+ *
+ * Lets try to get #3 in here
+ */
 int ros_putchar(char c, FILE *stream);
 int ros_getchar(FILE *stream);
-
-
 FILE *ros_io = fdevopen(ros_putchar, ros_getchar);
 
 Ros::Ros(char *node_name, uint8_t num_of_msg_types)
