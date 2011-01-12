@@ -85,7 +85,7 @@ private:
 	ROS::string name;
 
 	ros_cb cb_list[10];
-	Msg *msgList[10];
+	Msg *msg_list[10];
 	uint8_t outBuffer[UINT8_MAX + 1];
 
 	uint8_t NUM_OF_MSG_TYPES;

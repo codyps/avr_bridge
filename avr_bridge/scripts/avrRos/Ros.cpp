@@ -76,7 +76,7 @@ void Ros::subscribe(char *topic, ros_cb funct, Msg *msg)
 {
 	int tag = getTopicTag(topic);
 	this->cb_list[tag] = funct;
-	this->msgList[tag] = msg;
+	this->msg_list[tag] = msg;
 }
 
 void Ros::publish(Publisher pub, Msg *msg)
@@ -101,9 +101,9 @@ void Ros::process_pkt()
 	case PT_TOPIC:
 		//ie its a valid topic tag
 		//then deserialize the msg
-		this->msgList[header->topic_tag]->deserialize(buffer+4);
+		this->msg_list[header->topic_tag]->deserialize(buffer+4);
 		//call the registered callback function
-		this->cb_list[header->topic_tag](this->msgList[header->topic_tag]);
+		this->cb_list[header->topic_tag](this->msg_list[header->topic_tag]);
 		break;
 	case PT_SERVICE:
 		break;
