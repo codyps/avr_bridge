@@ -41,7 +41,6 @@
 #include "WProgram.h"
 
 #include <stdio.h>
-#include "String.h"
 
 /* XXX: where are these defined? why aren't they defined as externs in
  * a header file? What are they, anyhow?
