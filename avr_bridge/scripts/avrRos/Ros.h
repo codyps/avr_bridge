@@ -63,7 +63,7 @@ typedef uint8_t Publisher;
 
 struct RosInputCtx {
 	RosInputCtx(uint8_t _topic_tag_max);
-	bool append(char c)
+	bool append(char c);
 	void reset(void) {
 		buffer_index = 0;
 	}
