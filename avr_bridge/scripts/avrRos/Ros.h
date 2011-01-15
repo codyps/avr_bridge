@@ -61,6 +61,24 @@ struct PktHeader {
 
 typedef uint8_t Publisher;
 
+struct RosInputCtx {
+	RosInputCtx(uint8_t _topic_tag_max);
+	bool append(char c)
+	void reset(void) {
+		buffer_index = 0;
+	}
+
+	/* only used for a sanity check */
+	uint8_t topic_tag_max;
+
+	/* convenient access to the buffer */
+	PktHeader *header;
+
+	/* buffer incomming chars. */
+	uint8_t buffer[ROS_BUFFER_SIZE];
+	uint8_t buffer_index;
+};
+
 class Ros {
 public:
 	Ros(char *node_name, uint8_t num_of_msg_types);
@@ -88,25 +106,19 @@ private:
 	Msg *msg_list[10];
 	uint8_t outBuffer[UINT8_MAX + 1];
 
-	uint8_t NUM_OF_MSG_TYPES;
-
 	void getID();
 	void process_pkt();
 
-	char getTopicTag(char *topic); //Used to get the topic tag for its packet
+	/* given the character string of a topic, determines the numeric tag to
+	 * place in a packet */
+	char getTopicTag(char *topic);
 
-	//variables for handling incoming packets
-	PktHeader *header;
-	int packet_data_left;
-	uint8_t buffer[ROS_BUFFER_SIZE];
+	RosInputCtx in_ctx;
+
+	/* XXX: these two fields exsists for the sole purpose of compatability
+	 * with the exsisting python code. */
+	char *buffer;
 	uint8_t buffer_index;
-
-	enum packet_state {
-		header_state,
-		msg_data_state
-	} com_state;
-
-	void resetStateMachine();
 };
 
 extern Ros ros;

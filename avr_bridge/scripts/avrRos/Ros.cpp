@@ -65,11 +65,16 @@ FILE *ros_io = fdevopen(ros_putchar, ros_getchar);
 
 Ros::Ros(char *node_name, uint8_t num_of_msg_types)
 	: name(node_name)
-	, NUM_OF_MSG_TYPES(num_of_msg_types)
+	, in_ctx(num_of_msg_types)
+	, buffer(in_ctx->buffer)
+{}
+
+RosInputCtx::RosInputCtx(uint8_t _topic_tag_max)
+	: header(buffer)
 	, packet_data_left(0)
 	, buffer_index(0)
-	, header(buffer)
 	, com_state(header_state)
+	, topic_tag_max(_topic_tag_max)
 {}
 
 void Ros::subscribe(char *topic, ros_cb funct, Msg *msg)
@@ -85,29 +90,68 @@ void Ros::publish(Publisher pub, Msg *msg)
 		this->send(outBuffer,bytes,0,pub);
 }
 
-void Ros::resetStateMachine()
-{
-	packet_data_left = 0;
-	buffer_index = 0;
-	com_state = header_state;
-}
-
 void Ros::process_pkt()
 {
-	switch(header->packet_type) {
+	switch(this->in_ctx->header->packet_type) {
 	case PT_GETID:
 		this->getID();
 		break;
 	case PT_TOPIC:
 		//ie its a valid topic tag
 		//then deserialize the msg
-		this->msg_list[header->topic_tag]->deserialize(buffer+4);
+		this->msg_list[header->topic_tag]->
+			deserialize(this->in_ctx->buffer+4);
 		//call the registered callback function
-		this->cb_list[header->topic_tag](this->msg_list[header->topic_tag]);
+		this->cb_list[header->topic_tag](this->
+				msg_list[this->in_ctx->header->topic_tag]);
 		break;
 	case PT_SERVICE:
 		break;
 	}
+}
+
+bool RosInputCtx::append(char c)
+{
+	/* the last call to append completed the packet, start over */
+	if (buffer_index == sizeof(this->header) + this->header->msg_length) {
+		this->reset();
+	}
+
+	if (buffer_index > ROS_BUFFER_SIZE) {
+		this->reset();
+	}
+
+	this->buffer[this->buffer_index] = c;
+	this->buffer_index++;
+
+	bool header_completed = this->buffer_index == sizeof(this->header);
+	bool packet_completed = this->buffer_index ==
+		this->header->msg_length + sizeof(this->header);
+	if (header_completed) {
+		/* is the packet type something we know about? */
+		if ((this->header->packet_type != PT_TOPIC) &&
+				(this->header->packet_type != PT_GETID)) {
+			this->reset();
+			return false;
+		}
+
+		/* does the topic_tag make sense? */
+		if (this->header->topic_tag >= this->topic_tag_max) {
+			this->reset();
+			return false;
+		}
+
+		/* does the msg_length make sense? */
+		if (this->header->msg_length >= ROS_BUFFER_SIZE) {
+			this->reset();
+			return false;
+		}
+
+		return false;
+	} else if (packet_completed) {
+		return true;
+	}
+	return false;
 }
 
 void Ros::spin()
@@ -115,30 +159,11 @@ void Ros::spin()
 	int com_byte =  ros_getchar(ros_io);
 
 	while (com_byte != -1) {
-		buffer[buffer_index] = com_byte;
-		buffer_index++;
-
-		if(com_state == header_state){
-			if (buffer_index == sizeof(PktHeader)) {
-				com_state = msg_data_state;
-				this->packet_data_left = header->msg_length;
-
-				if (! ( (header->packet_type == PT_TOPIC)
-				         || (header->packet_type == PT_GETID) ) )
-						resetStateMachine();
-				if (header->packet_type == PT_TOPIC) {
-					if ( (header->topic_tag >= NUM_OF_MSG_TYPES)
-					     || (header->msg_length>= ROS_BUFFER_SIZE) )
-					     resetStateMachine();
-				}
-			}
-		}
-		if (com_state ==  msg_data_state){
-			packet_data_left--;
-			if (packet_data_left <0){
-				resetStateMachine();
-				process_pkt();
-			}
+		if (this->in_ctx->append(com_byte)) {
+			/* XXX: the following line is solely for compatability with the
+			 * exsisting python code */
+			this->buffer_index = this->in_ctx->buffer_index;
+			this->process_pkt();
 		}
 
 		com_byte =  ros_getchar(ros_io);
@@ -174,7 +199,6 @@ void Ros::getID()
 	uint16_t size = this->name.serialize(ros.outBuffer);
 	this->send(outBuffer, size, PT_GETID, 0);
 }
-
 
 Ros::~Ros()
 {}
