@@ -42,13 +42,6 @@
 
 #include <stdio.h>
 
-/* XXX: where are these defined? why aren't they defined as externs in
- * a header file? What are they, anyhow?
- * Both appear unused. Remove?
- */
-extern Publisher resp;
-extern std_msgs::String response_msg;
-
 /* XXX: there are 3 ways to go about giving class Ros the ability to send
  * data over the wire:
  *  1) use hard coded function names which (for some inexplicable
