@@ -43,7 +43,7 @@
 
 #include <stdint.h>
 
-#define __depricated __attribute__((depricated))
+#define __deprecated __attribute__((deprecated))
 
 #ifndef UINT8_MAX
 #define UINT8_MAX 0xff
@@ -94,12 +94,12 @@ public:
 
 	void spin(char c);
 
-	__depricated
+	__deprecated
 	void spin();
 
 	/* XXX: the types are possibly wrong (or at least misleading), and the
 	 * argument ordering is not natural. The name `send` is also unclear. */
-	__depricated
+	__deprecated
 	void send(uint8_t const *data, uint16_t length,
 			char packet_type, char topicID);
 

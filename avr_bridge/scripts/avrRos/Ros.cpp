@@ -184,7 +184,7 @@ void Ros::send_pkt(uint8_t pkt_type, uint8_t topic,
 
 	fwrite(&head, sizeof(head), 1, ros_io);
 
-	fwrite(data, length, 1, ros_io);
+	fwrite(data, data_len, 1, ros_io);
 }
 
 void Ros::send(uint8_t const *data, uint16_t data_len,
