@@ -75,7 +75,7 @@ void Ros::subscribe(char const *topic, ros_cb funct, Msg *msg)
 void Ros::publish(Publisher pub, Msg *msg)
 {
 	uint16_t bytes = msg->serialize(this->outBuffer);
-	this->send(outBuffer,bytes,0,pub);
+	this->send_pkt(PT_TOPIC, pub, outBuffer, bytes);
 }
 
 void Ros::process_pkt()
@@ -190,7 +190,7 @@ void Ros::send(uint8_t const *data, uint16_t data_len,
 void Ros::getID()
 {
 	uint16_t size = this->name.serialize(this->outBuffer);
-	this->send(outBuffer, size, PT_GETID, 0);
+	this->send_pkt(PT_GETID, 0, outBuffer, size);
 }
 
 Ros::~Ros()
