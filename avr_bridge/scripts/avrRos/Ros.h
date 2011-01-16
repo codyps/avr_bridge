@@ -117,7 +117,7 @@ private:
 
 	/* XXX: these two fields exsists for the sole purpose of compatability
 	 * with the exsisting python code. */
-	char *buffer;
+	uint8_t *buffer;
 	uint8_t buffer_index;
 };
 
