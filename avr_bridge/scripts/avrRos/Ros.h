@@ -121,7 +121,4 @@ private:
 	uint8_t buffer_index;
 };
 
-extern Ros ros;
-
-
 #endif /* ROS_H_ */
