@@ -94,9 +94,12 @@ public:
 
 	/* XXX: the types are possibly wrong (or at least misleading), and the
 	 * argument ordering is not natural. The name `send` is also unclear. */
+	__depricated
 	void send(uint8_t const *data, uint16_t length,
 			char packet_type, char topicID);
 
+	void send_pkt(uint8_t pkt_type, uint8_t topic,
+			uint8_t const *data, uint8_t data_len);
 
 	/* XXX: these do not exsist in Ros.cpp, should they be removed? */
 	void init_node();
