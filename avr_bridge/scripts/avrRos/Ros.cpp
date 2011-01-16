@@ -187,7 +187,7 @@ void Ros::send(uint8_t *data, uint16_t length, char packet_type, char topicID)
 
 void Ros::getID()
 {
-	uint16_t size = this->name.serialize(ros.outBuffer);
+	uint16_t size = this->name.serialize(this->outBuffer);
 	this->send(outBuffer, size, PT_GETID, 0);
 }
 
