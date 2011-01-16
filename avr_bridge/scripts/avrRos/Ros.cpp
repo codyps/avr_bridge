@@ -108,7 +108,7 @@ bool RosInputCtx::append(char c)
 		this->reset();
 	}
 
-	if (buffer_index > ROS_BUFFER_SIZE) {
+	if (buffer_index == (ROS_BUFFER_SIZE - 1)) {
 		this->reset();
 	}
 
