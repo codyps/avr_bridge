@@ -81,17 +81,18 @@ struct RosInputCtx {
 
 class Ros {
 public:
-	Ros(char *node_name, uint8_t num_of_msg_types);
+	Ros(char const *node_name, uint8_t num_of_msg_types);
 
-	Publisher advertise(char* topic);
+	Publisher advertise(char const *topic);
 	void publish(Publisher pub, Msg *msg);
-	void subscribe(char *name, ros_cb funct, Msg *msg);
+	void subscribe(char const *name, ros_cb funct, Msg *msg);
 
 	void spin();
 
 	/* XXX: the types are possibly wrong (or at least misleading), and the
 	 * argument ordering is not natural. The name `send` is also unclear. */
-	void send(uint8_t *data, uint16_t length, char packet_type, char topicID);
+	void send(uint8_t const *data, uint16_t length,
+			char packet_type, char topicID);
 
 
 	/* XXX: these do not exsist in Ros.cpp, should they be removed? */
@@ -111,7 +112,7 @@ private:
 
 	/* given the character string of a topic, determines the numeric tag to
 	 * place in a packet */
-	char getTopicTag(char *topic);
+	char getTopicTag(char const *topic);
 
 	RosInputCtx in_ctx;
 

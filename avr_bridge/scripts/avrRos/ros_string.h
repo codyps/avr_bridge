@@ -46,9 +46,9 @@ namespace ROS{
 class string{
 public:
 	string(uint16_t maxLength);
-	string(char * str);
+	string(char const *str);
 	string();
-	void setString(char* str);
+	void setString(char const *str);
 	uint16_t bytes();
 	uint16_t serialize(uint8_t* buffer);
 	uint16_t deserialize(uint8_t* buffer);

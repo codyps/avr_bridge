@@ -40,7 +40,6 @@
 
 #include <stdint.h>
 
-
 class Msg {
 public:
 	Msg(){};

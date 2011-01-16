@@ -61,11 +61,11 @@ void string::setMaxLength( uint16_t maxLength){
 	}
 }
 
-string::string(char * str){
+string::string(char const *str){
 	this->setString(str);
 }
 
-void string::setString(char * str){
+void string::setString(char const *str){
 	int l = strlen(str);
 
 	if (maxlength<=0) setMaxLength(l);
