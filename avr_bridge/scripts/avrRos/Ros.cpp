@@ -58,16 +58,15 @@ FILE *ros_io = fdevopen(ros_putchar, ros_getchar);
 Ros::Ros(char *node_name, uint8_t num_of_msg_types)
 	: name(node_name)
 	, in_ctx(num_of_msg_types)
-	, buffer(in_ctx->buffer)
+	, buffer(in_ctx.buffer)
 {}
 
 RosInputCtx::RosInputCtx(uint8_t _topic_tag_max)
-	: header(buffer)
-	, packet_data_left(0)
+	: topic_tag_max(_topic_tag_max)
 	, buffer_index(0)
-	, com_state(header_state)
-	, topic_tag_max(_topic_tag_max)
-{}
+{
+	this->header = (PktHeader *)this->buffer;
+}
 
 void Ros::subscribe(char *topic, ros_cb funct, Msg *msg)
 {
@@ -79,23 +78,23 @@ void Ros::subscribe(char *topic, ros_cb funct, Msg *msg)
 void Ros::publish(Publisher pub, Msg *msg)
 {
 	uint16_t bytes = msg->serialize(this->outBuffer);
-		this->send(outBuffer,bytes,0,pub);
+	this->send(outBuffer,bytes,0,pub);
 }
 
 void Ros::process_pkt()
 {
-	switch(this->in_ctx->header->packet_type) {
+	switch(this->in_ctx.header->packet_type) {
 	case PT_GETID:
 		this->getID();
 		break;
 	case PT_TOPIC:
 		//ie its a valid topic tag
 		//then deserialize the msg
-		this->msg_list[header->topic_tag]->
-			deserialize(this->in_ctx->buffer+4);
+		this->msg_list[this->in_ctx.header->topic_tag]->
+			deserialize(this->in_ctx.buffer + 4);
 		//call the registered callback function
-		this->cb_list[header->topic_tag](this->
-				msg_list[this->in_ctx->header->topic_tag]);
+		this->cb_list[this->in_ctx.header->topic_tag](this->
+				msg_list[this->in_ctx.header->topic_tag]);
 		break;
 	case PT_SERVICE:
 		break;
@@ -151,10 +150,10 @@ void Ros::spin()
 	int com_byte =  ros_getchar(ros_io);
 
 	while (com_byte != -1) {
-		if (this->in_ctx->append(com_byte)) {
+		if (this->in_ctx.append(com_byte)) {
 			/* XXX: the following line is solely for compatability with the
 			 * exsisting python code */
-			this->buffer_index = this->in_ctx->buffer_index;
+			this->buffer_index = this->in_ctx.buffer_index;
 			this->process_pkt();
 		}
 
