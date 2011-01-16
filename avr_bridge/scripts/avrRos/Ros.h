@@ -43,6 +43,8 @@
 
 #include <stdint.h>
 
+#define __depricated __attribute__((depricated))
+
 #ifndef UINT8_MAX
 #define UINT8_MAX 0xff
 #endif
@@ -90,6 +92,9 @@ public:
 	void publish(Publisher pub, Msg *msg);
 	void subscribe(char const *name, ros_cb funct, Msg *msg);
 
+	void spin(char c);
+
+	__depricated
 	void spin();
 
 	/* XXX: the types are possibly wrong (or at least misleading), and the

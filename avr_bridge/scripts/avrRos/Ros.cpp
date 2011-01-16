@@ -143,17 +143,22 @@ bool RosInputCtx::append(char c)
 	return false;
 }
 
+void Ros::spin(char c)
+{
+	if (this->in_ctx.append(c)) {
+		/* XXX: the following line is solely for compatability with the
+		 * exsisting python code */
+		this->buffer_index = this->in_ctx.buffer_index;
+		this->process_pkt();
+	}
+}
+
 void Ros::spin()
 {
 	int com_byte =  ros_getchar(ros_io);
 
 	while (com_byte != -1) {
-		if (this->in_ctx.append(com_byte)) {
-			/* XXX: the following line is solely for compatability with the
-			 * exsisting python code */
-			this->buffer_index = this->in_ctx.buffer_index;
-			this->process_pkt();
-		}
+		this->spin(com_byte);
 
 		com_byte =  ros_getchar(ros_io);
 	}
