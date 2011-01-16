@@ -64,9 +64,7 @@ Ros::Ros(char const *node_name, uint8_t num_of_msg_types)
 RosInputCtx::RosInputCtx(uint8_t _topic_tag_max)
 	: topic_tag_max(_topic_tag_max)
 	, buffer_index(0)
-{
-	this->header = (PktHeader *)this->buffer;
-}
+{}
 
 void Ros::subscribe(char const *topic, ros_cb funct, Msg *msg)
 {
@@ -83,18 +81,18 @@ void Ros::publish(Publisher pub, Msg *msg)
 
 void Ros::process_pkt()
 {
-	switch(this->in_ctx.header->packet_type) {
+	switch(this->in_ctx.header.packet_type) {
 	case PT_GETID:
 		this->getID();
 		break;
 	case PT_TOPIC:
 		//ie its a valid topic tag
 		//then deserialize the msg
-		this->msg_list[this->in_ctx.header->topic_tag]->
+		this->msg_list[this->in_ctx.header.topic_tag]->
 			deserialize(this->in_ctx.buffer + 4);
 		//call the registered callback function
-		this->cb_list[this->in_ctx.header->topic_tag](this->
-				msg_list[this->in_ctx.header->topic_tag]);
+		this->cb_list[this->in_ctx.header.topic_tag](this->
+				msg_list[this->in_ctx.header.topic_tag]);
 		break;
 	case PT_SERVICE:
 		break;
@@ -104,7 +102,7 @@ void Ros::process_pkt()
 bool RosInputCtx::append(char c)
 {
 	/* the last call to append completed the packet, start over */
-	if (buffer_index == sizeof(this->header) + this->header->msg_length) {
+	if (buffer_index == sizeof(this->header) + this->header.msg_length) {
 		this->reset();
 	}
 
@@ -117,23 +115,23 @@ bool RosInputCtx::append(char c)
 
 	bool header_completed = this->buffer_index == sizeof(this->header);
 	bool packet_completed = this->buffer_index ==
-		this->header->msg_length + sizeof(this->header);
+		this->header.msg_length + sizeof(this->header);
 	if (header_completed) {
 		/* is the packet type something we know about? */
-		if ((this->header->packet_type != PT_TOPIC) &&
-				(this->header->packet_type != PT_GETID)) {
+		if ((this->header.packet_type != PT_TOPIC) &&
+				(this->header.packet_type != PT_GETID)) {
 			this->reset();
 			return false;
 		}
 
 		/* does the topic_tag make sense? */
-		if (this->header->topic_tag >= this->topic_tag_max) {
+		if (this->header.topic_tag >= this->topic_tag_max) {
 			this->reset();
 			return false;
 		}
 
 		/* does the msg_length make sense? */
-		if (this->header->msg_length >= ROS_BUFFER_SIZE) {
+		if (this->header.msg_length >= ROS_BUFFER_SIZE) {
 			this->reset();
 			return false;
 		}

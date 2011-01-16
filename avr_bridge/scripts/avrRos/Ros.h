@@ -71,11 +71,14 @@ struct RosInputCtx {
 	/* only used for a sanity check */
 	uint8_t topic_tag_max;
 
-	/* convenient access to the buffer */
-	PktHeader *header;
 
 	/* buffer incomming chars. */
-	uint8_t buffer[ROS_BUFFER_SIZE];
+	union {
+		uint8_t buffer[ROS_BUFFER_SIZE];
+		/* convenient access to the buffer */
+		PktHeader header;
+	};
+
 	uint8_t buffer_index;
 };
 
