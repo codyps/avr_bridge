@@ -38,7 +38,6 @@
 
 #include "Ros.h"
 #include "string.h"
-#include "WProgram.h"
 
 #include <stdio.h>
 
