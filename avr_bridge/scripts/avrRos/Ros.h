@@ -37,10 +37,10 @@
 
 #ifndef ROS_H_
 #define ROS_H_
-#include "WProgram.h"
 #include "ros_string.h"
 #include "Msg.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifndef UINT8_MAX
