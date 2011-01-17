@@ -40,6 +40,7 @@
 #include "ros_string.h"
 #include "Msg.h"
 
+#include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -86,7 +87,10 @@ struct RosInputCtx {
 
 class Ros {
 public:
+	__deprecated
 	Ros(char const *node_name, uint8_t num_of_msg_types);
+
+	Ros(char const *node_name, uint8_t num_of_msg_types, FILE *_io);
 
 	Publisher advertise(char const *topic);
 	void publish(Publisher pub, Msg *msg);
@@ -112,6 +116,8 @@ public:
 
 	~Ros();
 private:
+	FILE *io;
+
 	ROS::string name;
 
 	ros_cb cb_list[10];

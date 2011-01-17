@@ -52,10 +52,19 @@
  */
 int ros_putchar(char c, FILE *stream);
 int ros_getchar(FILE *stream);
-FILE *ros_io = fdevopen(ros_putchar, ros_getchar);
+static FILE *ros_io = fdevopen(ros_putchar, ros_getchar);
 
 Ros::Ros(char const *node_name, uint8_t num_of_msg_types)
 	: name(node_name)
+	, in_ctx(num_of_msg_types)
+	, buffer(in_ctx.buffer)
+{
+	this->io = ros_io;
+}
+
+Ros::Ros(char const *node_name, uint8_t num_of_msg_types, FILE *_io)
+	: io(_io)
+	, name(node_name)
 	, in_ctx(num_of_msg_types)
 	, buffer(in_ctx.buffer)
 {}
@@ -154,12 +163,12 @@ void Ros::spin(char c)
 
 void Ros::spin()
 {
-	int com_byte =  ros_getchar(ros_io);
+	int com_byte =  getchar(this->io);
 
 	while (com_byte != -1) {
 		this->spin(com_byte);
 
-		com_byte =  ros_getchar(ros_io);
+		com_byte =  getchar(this->io);
 	}
 }
 
@@ -181,9 +190,9 @@ void Ros::send_pkt(uint8_t pkt_type, uint8_t topic,
 		data_len
 	};
 
-	fwrite(&head, sizeof(head), 1, ros_io);
+	fwrite(&head, sizeof(head), 1, this->io);
 
-	fwrite(data, data_len, 1, ros_io);
+	fwrite(data, data_len, 1, this->io);
 }
 
 void Ros::send(uint8_t const *data, uint16_t data_len,
