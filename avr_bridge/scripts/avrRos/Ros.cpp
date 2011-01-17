@@ -195,12 +195,6 @@ void Ros::send_pkt(uint8_t pkt_type, uint8_t topic,
 	fwrite(data, data_len, 1, this->io);
 }
 
-void Ros::send(uint8_t const *data, uint16_t data_len,
-		char pkt_type, char topic)
-{
-	this->send_pkt(pkt_type, topic, data, data_len);
-}
-
 void Ros::getID()
 {
 	uint16_t size = this->name.serialize(this->outBuffer);
