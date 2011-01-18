@@ -158,12 +158,12 @@ void Ros::spin(char c)
 
 void Ros::spin()
 {
-	int com_byte =  getchar(this->io);
+	int com_byte = getc(this->io);
 
 	while (com_byte != -1) {
 		this->spin(com_byte);
 
-		com_byte =  getchar(this->io);
+		com_byte = getc(this->io);
 	}
 }
 
