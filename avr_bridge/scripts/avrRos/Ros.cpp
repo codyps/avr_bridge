@@ -57,7 +57,6 @@ static FILE *ros_io = fdevopen(ros_putchar, ros_getchar);
 Ros::Ros(char const *node_name, uint8_t num_of_msg_types)
 	: name(node_name)
 	, in_ctx(num_of_msg_types)
-	, buffer(in_ctx.buffer)
 {
 	this->io = ros_io;
 }
@@ -66,7 +65,6 @@ Ros::Ros(char const *node_name, uint8_t num_of_msg_types, FILE *_io)
 	: io(_io)
 	, name(node_name)
 	, in_ctx(num_of_msg_types)
-	, buffer(in_ctx.buffer)
 {}
 
 RosInputCtx::RosInputCtx(uint8_t _topic_tag_max)
@@ -154,9 +152,6 @@ bool RosInputCtx::append(char c)
 void Ros::spin(char c)
 {
 	if (this->in_ctx.append(c)) {
-		/* XXX: the following line is solely for compatability with the
-		 * exsisting python code */
-		this->buffer_index = this->in_ctx.buffer_index;
 		this->process_pkt();
 	}
 }
