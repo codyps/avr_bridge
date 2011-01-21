@@ -56,8 +56,14 @@ class Ros {
 public:
 	Ros(char * node_name, uint8_t num_of_msg_types );
 	
-	void init_node();
-	
+	//initCommunication is a hook for user implemented code
+	// this code should set up user implemented
+	// ros_putchar/ros_getchar functions
+	void initCommunication();
+
+	//Get the publisher for a topic
+	//You cannot advertise a topic that was not in the configuration
+	//file
 	Publisher advertise(char* topic);
 
 	void publish(Publisher pub, Msg* msg);
@@ -65,16 +71,16 @@ public:
 	void subscribe(char* name, ros_cb funct, Msg* msg);
 	void spin();
 
+	//send a msg to the bridge node
 	void send(uint8_t* data, uint16_t length, char packet_type, char topicID); //handles actually sending the data
 
 	ROS::string name;
-	void initCommunication();
 
 	~Ros();
 private:
 	ros_cb cb_list[10];
 	Msg * msgList[10];
-	uint8_t outBuffer[300];
+	uint8_t outBuffer[ROS_BUFFER_SIZE];
 
 
 
