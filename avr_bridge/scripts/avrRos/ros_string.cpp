@@ -97,9 +97,6 @@ uint16_t string::deserialize(uint8_t* buffer){
 		data[length] =0;
 	}
 
-
-
-	 //add null terminating charater
 	return length+4;
 }
 
