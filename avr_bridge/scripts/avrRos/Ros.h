@@ -86,16 +86,20 @@ class Ros {
 public:
 	Ros(char const *node_name, uint8_t num_of_msg_types);
 
+	//initCommunication is a hook for user implemented code
+	// this code should set up user implemented
+	// ros_putchar/ros_getchar functions
+	void initCommunication();
+
+	//Get the publisher for a topic
+	//You cannot advertise a topic that was not in the configuration
+	//file
 	Publisher advertise(char const *topic);
+
 	void publish(Publisher pub, Msg *msg);
 	void subscribe(char const *name, ros_cb funct, Msg *msg);
 
 	void spin();
-
-
-	/* XXX: these do not exsist in Ros.cpp, should they be removed? */
-	void init_node();
-	void initCommunication();
 
 	~Ros();
 private:
@@ -103,7 +107,7 @@ private:
 
 	ros_cb cb_list[10];
 	Msg *msg_list[10];
-	uint8_t outBuffer[UINT8_MAX + 1];
+	uint8_t outBuffer[ROS_BUFFER_SIZE];
 
 	void getID();
 	void process_pkt();
