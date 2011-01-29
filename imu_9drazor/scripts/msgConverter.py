@@ -48,7 +48,7 @@ if __name__ == '__main__':
 		imuMsg.linear_acceleration.z = rawMsg.linear_acceleration.z
 		
 		q =   tf.transformations.quaternion_from_euler(rawMsg.roll,rawMsg.pitch,rawMsg.yaw)
-		imuMsg.orientation.x = q[1]
+		imuMsg.orientation.x = q[0]
 		imuMsg.orientation.y = q[1]
 		imuMsg.orientation.z = q[2]
 		imuMsg.orientation.w = q[3]

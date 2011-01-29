@@ -56,6 +56,9 @@ class Ros {
 public:
 	Ros(char * node_name, uint8_t num_of_msg_types );
 	
+	//Sets up the communication
+	void init_node();
+	
 	//initCommunication is a hook for user implemented code
 	// this code should set up user implemented
 	// ros_putchar/ros_getchar functions
