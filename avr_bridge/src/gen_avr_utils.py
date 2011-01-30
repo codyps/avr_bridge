@@ -60,22 +60,22 @@ import yaml
 import StringIO
 
 
-primatives ={
-				'bool'  :   ('bool', 1) ,
-				'byte'  :   ('uint8_t', 1),
-				'int8'  :   ('uint8_t', 1),
-				'int16' :   ('int16_t', 2),
-				'uint16':   ('uint16_t', 2),
-				'int32':    ('int32_t', 4),
-				'uint32':   ('uint32_t', 4),
-				'int64':    ('int64_t',8),
-				'uint64':   ('uint64_t',8),
-				'float32':  ('float', 4 ),
-				'float64':  ('double', 8),
-				'time':     ('int64_t',8),
-				'duration': ('int64_t',8),
-				'string' :  ('ROS::string', 0)
-				}
+primatives = {
+	'bool'  :   ('bool', 1) ,
+	'byte'  :   ('uint8_t', 1),
+	'int8'  :   ('uint8_t', 1),
+	'int16' :   ('int16_t', 2),
+	'uint16':   ('uint16_t', 2),
+	'int32':    ('int32_t', 4),
+	'uint32':   ('uint32_t', 4),
+	'int64':    ('int64_t',8),
+	'uint64':   ('uint64_t',8),
+	'float32':  ('float', 4 ),
+	'float64':  ('double', 8),
+	'time':     ('int64_t',8),
+	'duration': ('int64_t',8),
+	'string' :  ('ROS::string', 0)
+}
 
 def extract_ros_type(field):
 	""" This is an utility function to extract the basic type
