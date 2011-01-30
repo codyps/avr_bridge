@@ -150,7 +150,7 @@ CPPFLAGS += -Wall
 CPPFLAGS += -Wundef
 #CPPFLAGS += -mshort-calls
 #CPPFLAGS += -fno-unit-at-a-time
-CPPFLAGS += -Wstrict-prototypes
+#CPPFLAGS += -Wstrict-prototypes
 CPPFLAGS += -Wunreachable-code
 #CPPFLAGS += -Wsign-compare
 #CPPFLAGS += -Wa,-adhlns=$(<:%.cpp=$(OBJDIR)/%.lst)
@@ -316,7 +316,7 @@ WINSHELL = cmd
 
 
 # Define all object files.
-CCOBJ = $(CCSRC:%.cpp = $(OBJDIR)/%.o)
+CCOBJ = $(CCSRC:%.cpp=$(OBJDIR)/%.o)
 OBJ = $(SRC:%.c=$(OBJDIR)/%.o) $(CCOBJ) $(ASRC:%.S=$(OBJDIR)/%.o) 
 
 # Define all listing files.
@@ -335,7 +335,7 @@ ALL_CPPFLAGS = -mmcu=$(MCU) -I. -x c++ $(CPPFLAGS) $(GENDEPFLAGS)
 ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 # Default target.
-all: sizebefore build sizeafter
+all: build
 
 rebuild: | clean build
 
@@ -344,29 +344,28 @@ build: elf hex eep lss sym
 #build: lib
 
 
-elf: $(TARGET).elf $(TARGET).u.elf
-hex: $(TARGET).hex $(TARGET).u.hex
-eep: $(TARGET).eep $(TARGET).u.eep
-lss: $(TARGET).lss $(TARGET).u.lss
-sym: $(TARGET).sym $(TARGET).u.sym
+elf: $(TARGET).elf
+hex: $(TARGET).hex
+eep: $(TARGET).eep
+lss: $(TARGET).lss
+sym: $(TARGET).sym
 LIBNAME=lib$(TARGET).a
 lib: $(LIBNAME)
 
 # Display size of file.
 HEXSIZE = $(SIZE) --target=$(FORMAT) $(TARGET).hex
 ELFSIZE = $(SIZE) --mcu=$(MCU) --format=avr $(TARGET).elf
-UELFSIZE = $(SIZE) --mcu=$(MCU) --format=avr $(TARGET).u.elf
 
-size : $(TARGET).size $(TARGET).u.size
+size : $(TARGET).size
 
 %.size : %.elf
-	$(SIZE) --mcu=$(MCU) --format=avr $<
+	$(SIZE) --mcu=$(MCU) $<
 
 sizebefore:
-	@if test -f $(TARGET).elf; then $(ELFSIZE); $(UELFSIZE); 2>/dev/null; fi
+	@if test -f $(TARGET).elf; then $(ELFSIZE); 2>/dev/null; fi
 
 sizeafter:
-	@if test -f $(TARGET).elf; then $(ELFSIZE); $(UELFSIZE); 2>/dev/null; fi
+	@if test -f $(TARGET).elf; then $(ELFSIZE); 2>/dev/null; fi
 
 
 
@@ -458,10 +457,6 @@ extcoff: $(TARGET).elf
 	@echo $(MSG_CREATING_LIBRARY) $@
 	$(AR) $@ $(OBJ)
 
-# Unified elf build.
-%.u.elf: $(SRC) $(CCSRC)
-	@echo CCLD $@
-	@$(CC) $(ALL_CFLAGS) $(LDFLAGS) -fwhole-program -o $@ -combine $^
 
 # Link: create ELF output file from object files.
 .SECONDARY : $(TARGET).elf
@@ -469,7 +464,6 @@ extcoff: $(TARGET).elf
 %.elf: $(OBJ)
 	@echo LD $@
 	@$(CC) $(ALL_CFLAGS) $(GENDEPFLAGS) -o $@ $^ $(LDFLAGS)
-
 
 
 # Compile: create object files from C source files.
@@ -509,9 +503,10 @@ clean_msg:
 	@echo CLEAN
 %.clean :
 	@$(RM) $*.hex $*.eep $*.cof $*.elf $*.map $*.sym $*.lss
-clean : | clean_msg $(TARGET).clean $(TARGET).u.clean
+clean : | clean_msg $(TARGET).clean
 	@$(RM) $(SRC:%.c=$(OBJDIR)/%.o) \
 	      $(SRC:%.c=$(OBJDIR)/%.lst) \
+	      $(CCSRC:%.cpp=$(OBJDIR)/%.o) \
 	      $(SRC:.c=.s) \
 	      $(SRC:.c=.d) \
 	      $(SRC:.c=.i)
