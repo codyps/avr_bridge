@@ -58,13 +58,12 @@ if __name__ == "__main__":
 	
 	if (len(sys.argv) != 3 ):
 		print """
-		This program generates the c source code for an avr processor
-		to communicate with ros over serial.
-		
-		It works with bridge_node.py
-		
-		To Use gen_avr.py
-		./gen_avr.py configFile  outputDir
+                usage: gen_avr.py <msg_spec> <output_dir>
+
+		Generate C++ code implimenting message serialization
+                and deserialization.
+
+                Designed for use with avr_bridge.py
 		"""
 	
 	config, outputDir = sys.argv[1:3]
