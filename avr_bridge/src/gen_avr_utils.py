@@ -253,7 +253,7 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	f.macro_line('include "{0}.h"'.format(msg_name))
 	f.macro_line('include <stdio.h>')
 	
-	f.macro_line('using namespace {0};'.format(pkg))
+	f.line('using namespace {0};'.format(pkg))
 	
 	def writeFunct(rtype, msg, funct, args, implementation):
 		if rtype != '':
