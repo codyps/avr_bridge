@@ -277,11 +277,6 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 		f.line( ':' + constructor_init[:-1])
 	f.line('{}')
 	
-
-	writeFunct('', msg_name, '~'+msg_name, '', lambda f: 0)
-
-	writeFunct('', msg_name, msg_name,'uint8_t *data', lambda f: f.line('this->deserialize(data);'))
-	
 	writeFunct('uint16_t', msg_name, 'serialize', 'uint8_t *data', lambda f: serialize_msg(f, msg_spec))
 	writeFunct('uint16_t', msg_name, 'deserialize', 'uint8_t *data', lambda f: deserialize_msg(f,msg_spec))
 	writeFunct('uint16_t', msg_name, 'bytes', '', lambda f: msg_size(f, msg_spec))
