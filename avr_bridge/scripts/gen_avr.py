@@ -65,6 +65,7 @@ if __name__ == "__main__":
 
                 Designed for use with avr_bridge.py
 		"""
+		sys.exit(1)
 	
 	config, outputDir = sys.argv[1:3]
   	
