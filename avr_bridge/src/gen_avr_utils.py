@@ -249,7 +249,6 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	@param msg_spec : msg_spec object of the msg
 	"""
 
-
 	f.macro_line('include "{0}.h"'.format(msg_name))
 	f.macro_line('include <stdio.h>')
 	
@@ -283,9 +282,9 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 
 	writeFunct('', msg_name, msg_name,'uint8_t *data', lambda f: f.line('this->deserialize(data);'))
 	
-	writeFunct('uint16_t ', msg_name, 'serialize', 'uint8_t *data', lambda f: serialize_msg(f, msg_spec))
-	writeFunct('uint16_t ', msg_name, 'deserialize', 'uint8_t *data', lambda f: deserialize_msg(f,msg_spec))
-	writeFunct('uint16_t ', msg_name, 'bytes', '', lambda f: msg_size(f, msg_spec))
+	writeFunct('uint16_t', msg_name, 'serialize', 'uint8_t *data', lambda f: serialize_msg(f, msg_spec))
+	writeFunct('uint16_t', msg_name, 'deserialize', 'uint8_t *data', lambda f: deserialize_msg(f,msg_spec))
+	writeFunct('uint16_t', msg_name, 'bytes', '', lambda f: msg_size(f, msg_spec))
 
 class CGenerator():
 	"""
