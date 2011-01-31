@@ -2,11 +2,11 @@ port: /dev/ttyUSB0
 name : Arduino
 publish:
  odom: #topic name
-  type: nav_msgs/odometry 
+  type: nav_msgs/Odometry 
  hello:
   type: std_msgs/String  
 subscribe:
  cmd_vel: #subscribing topic name
-  type: geometry_msg/Twist
+  type: geometry_msgs/Twist
  chatter:
   type: std_msgs/String
