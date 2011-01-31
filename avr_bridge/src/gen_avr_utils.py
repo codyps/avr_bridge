@@ -79,10 +79,11 @@ primatives = {
 }
 
 def extract_ros_type(field):
-	"""	extract the basic type
-		from the msg_spec field
-		without the array symbols
-		and with the pkg separted
+	"""
+	extract the basic type
+	from the msg_spec field
+	without the array symbols
+	and with the pkg separted
 	"""
 	try:
 		incPkg, incName = field.type.split('/')
@@ -94,34 +95,36 @@ def extract_ros_type(field):
 	return incPkg, incName
 	
 def serialize_primative(f, buffer_addr, field):
-	"""	Generate c code to serialize rostype of fieldname at the buffer 
+	"""Generate c code to serialize rostype of fieldname at the buffer 
 	"""
 	fpkg, ftype = extract_ros_type(field)
 	ctype, clen = primatives[ftype]
 	
 	
 	if (field.is_array or field.type == 'string'):
-		f.write('offset += this->%s.serialize(%s + offset);\n'%(field.name, buffer_addr))
+		f.line('offset += this->%s.serialize(%s + offset);'%(field.name, buffer_addr))
 	else:
-		f.write("*( (%s *) (%s + offset))=  this->%s; \n"%(ctype, buffer_addr, field.name) )
-		f.write('offset += %d;\n'%(clen)) 
+		f.line('*( (%s *) (%s + offset))=  this->%s;'%(ctype, buffer_addr, field.name) )
+		f.line('offset += %d;'%(clen)) 
 		
 def deserialize_primative(f, buffer_addr, field):
-	"""	Generate c code to deserialize a rosmsg field of type ctype from 
-		specified buffer.
+	"""
+	Generate c code to deserialize a rosmsg field of type ctype from 
+	specified buffer.
 	"""
 	fpkg, ftype = extract_ros_type(field)
 	ctype, clen = primatives[ftype]
 
 	if (field.is_array or field.type == 'string'):
-		f.write('offset+= this->%s.deserialize(%s+offset);\n'%(field.name, buffer_addr))
+		f.line('offset+= this->%s.deserialize(%s+offset);\n'%(field.name, buffer_addr))
 	else:
-		f.write( "this->%s = *( (%s *) (%s + offset) );\n"%(field.name, ctype, buffer_addr) )
-		f.write('offset += %d;\n'%(clen))
+		f.line('this->%s = *( (%s *) (%s + offset) );'%(field.name, ctype, buffer_addr) )
+		f.line('offset += %d;'%(clen))
 				
 
 def write_header_file(f, msg_name, pkg, msg_spec):
-	"""f is a file like object to which the header file is being outputed
+	"""
+	f is a file like object to which the header file is being outputed
 	msg_name is the name of the msg
 	pkg is the msg's pkg
 	includes is a list of file names that should be included
@@ -192,58 +195,58 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.macro_line('endif /* {0} */'.format(guard))
 
 def serialize_msg(f, msg_spec):
-	f.write('\nint offset=0;\n')
+	f.line('int offset = 0;')
 	
 	for field in msg_spec.parsed_fields():
 		if (field.is_builtin):
 			serialize_primative(f, 'data', field)
 		else:
-			f.write('offset += this->%s.serialize(%s + offset);\n'%(field.name, 'data'))
+			f.line('offset += this->{0}.serialize({1} + offset);'.format(field.name, 'data'))
 			
-	f.write('\n return offset;\n')
+	f.line('return offset;')
 
 def deserialize_msg(f, msg_spec):
-	f.write('\nint offset=0;\n')
+	f.line('int offset = 0;')
 	
 	for field in msg_spec.parsed_fields():
 		if (field.is_builtin):
 			deserialize_primative(f, 'data', field)
 		else:
-			f.write('offset += this->%s.deserialize(%s + offset);\n'%(field.name, 'data'))
+			f.line('offset += this->{0}.deserialize({1} + offset);'.format(field.name, 'data'))
 			
-	f.write('\n return offset;\n')
+	f.line('return offset;')
 
 
 
 def msg_size(f, msg_spec):
 	"""
-This function writes out the bytes() member function for a msg.  
-It iterates through the msg fields and extracts either their size if 
-they are a primative type, or calls the bytes of that msg.
+	write out the bytes() member function for a msg.  
+	iterate through the msg fields and extracts either their size if 
+	they are a primative type, or call the bytes() of that msg.
 
 	@param f :  output file object
 	@param msg_spec : the msg_spec of the msg
 	"""
-	f.write('\n int msgSize=0;\n')
+	f.line('int msgSize = 0;')
 	
 	for field in msg_spec.parsed_fields():
 		if (field.is_builtin and not (field.type == 'string') ):
 			fpkg, ftype = extract_ros_type(field)
 			ctype, clen = primatives[ftype]
-			f.write('msgSize += sizeof(%s);\n'%(ctype))
+			f.line('msgSize += sizeof({0});'.format(ctype))
 		else:
-			f.write('msgSize += %s.bytes();\n'%field.name)
+			f.line('msgSize += {0}.bytes();'.format(field.name))
 	
-	f.write('return msgSize;\n')
+	f.line('return msgSize;')
 	
 
 def write_cpp(f, msg_name, pkg, msg_spec):
 	"""
-		Generates the msg cpp implementation file
-		@param f : output file object
-		@param msg_name : name of msg type
-		@param pkg : pkg that the message is found in
-		@param msg_spec : msg_spec object of the msg
+	Generate the msg cpp implementation file
+	@param f : output file object
+	@param msg_name : name of msg type
+	@param pkg : pkg that the message is found in
+	@param msg_spec : msg_spec object of the msg
 	"""
 
 
@@ -256,7 +259,7 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 		if rtype != '':
 			f.line('{0} {1}::{2}({3})'.format(rtype,msg,funct,args))
 		else:
-			f.line('{0}::{2}({3})'.format(msg, funct, args))
+			f.line('{0}::{1}({2})'.format(msg, funct, args))
 		f.line('{')
 		f.indent()
 		implementation(f)
@@ -375,7 +378,7 @@ class CGenerator():
 		"""
 		fo = open(folderPath+'/ros_generated.cpp', 'w');
 		
-		f = SimpleStateC(f)
+		f = SimpleStateC(fo)
 
 		f.line('/* This file was autogenerated as a part of the avr_bridge pkg')
 		f.line(' * avr_bridge was written by Adam Stambler and Phillip Quiza of')
@@ -400,7 +403,7 @@ class CGenerator():
 		f.line('}')
 
 
-		f.line('Ros ros({0}, {1});'.format(self.config['name'], len(self.topicIds)))
+		f.line('Ros ros("{0}", {1});'.format(self.config['name'], len(self.topicIds)))
 		f.close()
 		
 		
