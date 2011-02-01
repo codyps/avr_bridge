@@ -62,19 +62,19 @@ import StringIO
 from c_writer import SimpleStateC
 
 primatives = {
-	'bool'  :   ('bool', 1) ,
-	'byte'  :   ('uint8_t', 1),
-	'int8'  :   ('uint8_t', 1),
-	'int16' :   ('int16_t', 2),
+	'bool'  :   ('bool',     1),
+	'byte'  :   ('uint8_t',  1),
+	'int8'  :   ('uint8_t',  1),
+	'int16' :   ('int16_t',  2),
 	'uint16':   ('uint16_t', 2),
-	'int32':    ('int32_t', 4),
+	'int32':    ('int32_t',  4),
 	'uint32':   ('uint32_t', 4),
-	'int64':    ('int64_t',8),
-	'uint64':   ('uint64_t',8),
-	'float32':  ('float', 4 ),
-	'float64':  ('double', 8),
-	'time':     ('int64_t',8),
-	'duration': ('int64_t',8),
+	'int64':    ('int64_t',  8),
+	'uint64':   ('uint64_t', 8),
+	'float32':  ('float',    4),
+	'float64':  ('double',   8),
+	'time':     ('int64_t',  8),
+	'duration': ('int64_t',  8),
 	'string' :  ('ROS::string', 0)
 }
 
@@ -94,19 +94,45 @@ def extract_ros_type(field):
 		incName = incName[:incName.find('[')]
 	return incPkg, incName
 	
+def type_to_rint(t):
+	conv = {
+		1 : 'uint8_t',
+		2 : 'uint16_t',
+		4 : 'uint32_t',
+		8 : 'uint64_t'
+	}
+
+	return conv[t]
+
+def make_union_cast(cf, field_name, otype, olen):
+	uname = 'u_{0}'.format(field_name)
+
+	cf.line('union {')
+	cf.indent()
+	cf.line('{0} real;'.format(otype))
+	cf.line('{0} base;'.format(type_to_rint(olen)))
+	cf.dedent()
+	cf.line('}} {0};'.format(uname))
+
+	return uname
+
 def serialize_primative(f, buffer_addr, field):
 	"""Generate c code to serialize rostype of fieldname at the buffer 
 	"""
 	fpkg, ftype = extract_ros_type(field)
 	ctype, clen = primatives[ftype]
-	
+	fname = field.name
 	
 	if (field.is_array or field.type == 'string'):
-		f.line('offset += this->%s.serialize(%s + offset);'%(field.name, buffer_addr))
+		f.line('offset += this->%s.serialize(%s + offset);'%(fname, buffer_addr))
 	else:
-		f.line('*( (%s *) (%s + offset))=  this->%s;'%(ctype, buffer_addr, field.name) )
-		f.line('offset += %d;'%(clen)) 
-		
+		this = make_union_cast(f, field.name, ctype, clen)
+		f.line('{0}.real = this->{1}'.format(this, fname))
+		for byte in range(0, clen):
+			mask = '0xFF' + (clen - byte - 1) * '00'
+			f.line('*({0} + offset + {1}) = ({2}.base >> (8 * {3})) & {4}'.format(buffer_addr, byte, this, clen - byte - 1, mask))
+		f.line('offset += sizeof(this->{0});'.format(fname)) 
+
 def deserialize_primative(f, buffer_addr, field):
 	"""
 	Generate c code to deserialize a rosmsg field of type ctype from 
@@ -114,12 +140,17 @@ def deserialize_primative(f, buffer_addr, field):
 	"""
 	fpkg, ftype = extract_ros_type(field)
 	ctype, clen = primatives[ftype]
+	fname = field.name
 
 	if (field.is_array or field.type == 'string'):
-		f.line('offset+= this->%s.deserialize(%s+offset);\n'%(field.name, buffer_addr))
+		f.line('offset += this->%s.deserialize(%s + offset);'%(fname, buffer_addr))
 	else:
-		f.line('this->%s = *( (%s *) (%s + offset) );'%(field.name, ctype, buffer_addr) )
-		f.line('offset += %d;'%(clen))
+		this = make_union_cast(f, fname, ctype, clen)
+		for byte in range(0, clen):
+			f.line('{0}.base |= *({1} + offset + {2}) << (8 * {3})'.format(this, buffer_addr, byte, clen - byte - 1))
+
+		f.line('this->{0} = {1}.real'.format(fname, this))
+		f.line('offset += sizeof(this->{0});'.format(fname))
 				
 
 def write_header_file(f, msg_name, pkg, msg_spec):
@@ -136,7 +167,7 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.line(' */')
 	
 	#write header guards
-	guard =  msg_name+'_H'
+	guard = msg_name+'_H_'
 	guard = guard.upper()
 	f.macro_line('ifndef {0}'.format(guard))
 	f.macro_line('define {0}'.format(guard))
