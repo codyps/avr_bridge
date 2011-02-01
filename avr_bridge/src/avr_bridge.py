@@ -3,41 +3,41 @@
 avr_bridge utilties 
 by Adam Stambler of Rutger University.
 
-This software was written with support of a research grant (R01ES014717)
- from the National Institute of Environmental Health Sciences.  
+Written with support of a research grant (R01ES014717)
+from the National Institute of Environmental Health Sciences.
 
-# Software License Agreement (BSD License)
-#
-# Copyright (c) 2011, Adam Stambler
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials provided
-#    with the distribution.
-#  * Neither the name of Adam Stambler, Inc. nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-#
+Software License Agreement (BSD License)
+
+Copyright (c) 2011, Adam Stambler
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above
+   copyright notice, this list of conditions and the following
+   disclaimer in the documentation and/or other materials provided
+   with the distribution.
+ * Neither the name of Adam Stambler, Inc. nor the names of its
+   contributors may be used to endorse or promote products derived
+   from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
 """
 
 import roslib; roslib.load_manifest('avr_bridge')
@@ -54,12 +54,11 @@ import Queue
 debug_packets = False
 
 class Packet():
-	""" This packet class is in charge of keep track of 
-		transmission times, recieve/tranmission counts.
-		
-		
-	NOTE : in this version of the bridge, this tracking is not used
-			"""
+	"""
+	Coordinate tracking of transmission times and recieve &
+	transimision counts.
+	WARNING : presently unused.
+	"""
 	def __init__(self, name, tag, msgConstructor):
 		self.name = name
 		
@@ -83,12 +82,12 @@ class Packet():
 		
 	def parsePacketData(self, packet_data):
 		"""
-		Parses the recieved packet's data and 
+		Parse the recieved packet's data and
 		its msg object containing that data.
-			@param packet_data :  raw binary string of packet data
-			@param type packe_data : string
-			@return : ros msg
-			@rtype :  ros smg
+		@param packet_data :  raw binary string of packet data
+		@param type packe_data : string
+		@return : ros msg
+		@rtype :  ros smg
 		"""
 		msg = self.msgConstructor()
 		msg.deserialize(packet_data)
@@ -98,7 +97,7 @@ class Packet():
 		
 	def getMsgData(self, ros_msg):
 		"""
-		Deserializes a ros msg and keeps track of the transmission
+		Deserialize a ros msg and keeps track of the transmission
 		"""
 		data_buffer = StringIO.StringIO()
 		ros_msg.serialize(data_buffer)
@@ -112,13 +111,13 @@ class Packet():
 
 	def markRecieved(self):
 		"""
-			Marks that the last tranmissions was acknowledged
+		Mark that the last tranmissions was acknowledged
 		"""
 		self._ackRecieved = True
 	def retransmit(self):
 		""" 
-			Checks to see if the last transmission should be resent
-			because of acknowledgement timeout
+		Check to see if the last transmission should be resent
+		because of acknowledgement timeout
 		"""
 		if ( (not self._ackRecieved) and 
 			   ( (time.time() - self.last_trans_time) > 0.06)):
@@ -151,20 +150,19 @@ class AvrBridge():
 		
 		self._done = threading.Event()
 
-		
 		self.queue = Queue.Queue()
 		self.slock = threading.Semaphore()
 		
 		#packet structures
-		self.header_struct = struct.Struct('B B h') # packet_type topic_tag data_length
+		self.header_struct = struct.Struct('<B<B<h') # packet_type topic_tag data_length
 
 		
 	def registerTopic(self, topic, msgConstructor, recv_cb = None):
 		"""
-			Registers a topic for transmission 
-			@param topic : string of topic path/name
-			@param msgConstructor : ros msg object
-			@param 
+		Register a topic for transmission
+		@param topic : string of topic path/name
+		@param msgConstructor : ros msg object
+		@param 
 		"""
 		tag = len(self.packets_name)
 		packet = Packet(topic,tag, msgConstructor)
@@ -183,7 +181,7 @@ class AvrBridge():
 		
 	def run(self):
 		"""
-		Starts the io thread for the avr bridge
+		Start the io thread for the avr bridge
 		"""
 		if self.port == None :
 			raise "Port not opened!"
@@ -200,7 +198,7 @@ class AvrBridge():
 		
 	def shutdown(self):
 		"""
-		Turns off the io thread for avr_bridge and closes
+		Turn off the io thread for avr_bridge and closes
 		the serial port file.  This method must be called in order 
 		for the program to exit cleanly.
 		"""
@@ -217,7 +215,7 @@ class AvrBridge():
 			
 	def _check_io(self):
 		"""
-			Check the serial port and see if any new data has arived
+		Check the serial port and see if any new data has arived
 		"""
 		packet  = self._get_packet()
 		if packet == None :
@@ -244,10 +242,10 @@ class AvrBridge():
 		
 	def _get_packet(self):
 		"""
-			Reads reads the packet and 
-			returns the full binary string
-			@return packet,checksum
-			@rtype  binary strings
+		Read reads the packet and 
+		return the full binary string
+		@return packet,checksum
+		@rtype  binary strings
 		"""
 		if not self.port.isOpen():
 			raise Exception("Cannot get packet data, the port is not open")
@@ -274,12 +272,12 @@ class AvrBridge():
 		
 	def send(self, topic, msg):
 		"""
-			This function sends the message over the serial port
-			to the avr.
-			@param topic : topic name
-			@type  topic :  string
-			@param msg   :  msg to be sent
-			@type  msg   :  ros msg
+		send the message over the serial port
+		to the avr.
+		@param topic : topic name
+		@type  topic :  string
+		@param msg   :  msg to be sent
+		@type  msg   :  ros msg
 		"""
 		
 		#grab the info for the header
@@ -314,9 +312,10 @@ class AvrBridge():
 
 class AvrBridgeNode():
 	"""
-		This class is responsible for autogenerating a basic
-		AvrBridge node.  It reads a yaml configuration file
-		and builds the node for you.
+	responsible for autogenerating a basic
+	AvrBridge node.
+	read a yaml configuration file
+	and build the node.
 	"""
 	def __init__(self):
 		self.subscribers = {}
@@ -379,7 +378,7 @@ class AvrBridgeNode():
 						 
 	def addSubscriber(self, topic, msgConstructor):
 		"""
-		Adds a subscription to the avr_bridge node.
+		Add a subscription to the avr_bridge node.
 		@param  topic : name of topic being published
 		@param msgConstructor : msgConstructor for the topic's msg
 
@@ -390,7 +389,7 @@ class AvrBridgeNode():
 		
 	def addPublisher(self, topic, msgConstructor):
 		"""
-		Adds a publisher to the bridge node
+		Add a publisher to the bridge node
 		@param  topic : name of topic being published
 		@param msgConstructor : msgConstructor for the topic's msg
 		"""
