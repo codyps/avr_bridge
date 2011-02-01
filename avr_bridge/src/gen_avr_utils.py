@@ -129,8 +129,8 @@ def serialize_primative(f, buffer_addr, field):
 		this = make_union_cast(f, field.name, ctype, clen)
 		f.line('{0}.real = this->{1}'.format(this, fname))
 		for byte in range(0, clen):
-			mask = '0xFF' + (clen - byte - 1) * '00'
-			f.line('*({0} + offset + {1}) = ({2}.base >> (8 * {3})) & {4}'.format(buffer_addr, byte, this, clen - byte - 1, mask))
+			mask = '0xFF'
+			f.line('*({0} + offset + {1}) = ({2}.base >> (8 * {3})) & {4}'.format(buffer_addr, byte, this, byte, mask))
 		f.line('offset += sizeof(this->{0});'.format(fname)) 
 
 def deserialize_primative(f, buffer_addr, field):
@@ -146,8 +146,10 @@ def deserialize_primative(f, buffer_addr, field):
 		f.line('offset += this->%s.deserialize(%s + offset);'%(fname, buffer_addr))
 	else:
 		this = make_union_cast(f, fname, ctype, clen)
+		f.line('{0}.base = 0'.format(this))
 		for byte in range(0, clen):
-			f.line('{0}.base |= *({1} + offset + {2}) << (8 * {3})'.format(this, buffer_addr, byte, clen - byte - 1))
+			byte_i = clen - byte - 1
+			f.line('{0}.base |= *({1} + offset + {2}) << (8 * {3})'.format(this, buffer_addr, byte_i, byte))
 
 		f.line('this->{0} = {1}.real'.format(fname, this))
 		f.line('offset += sizeof(this->{0});'.format(fname))
