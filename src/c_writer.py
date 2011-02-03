@@ -43,12 +43,8 @@ class SimpleStateC():
 		self.out.close()
 
 class CStateTracker(SimpleStateC):
-	def __init__(output):
-		self.out = output
-		self.b_space = '\t'
-		self.m_space = ' '
-		self.b_indent = 0 # normal (brace) indent
-		self.m_indent = 0 # macro indent
+	def __init__(self, output):
+		SimpleStateC.__init__(self, output)
 
 	def _do_brace(self, brace_on_line=True):
 		"""write out a brace, update indent.
