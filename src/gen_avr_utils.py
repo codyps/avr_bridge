@@ -447,18 +447,21 @@ class CGenerator():
 		f = SimpleStateC(cpp_file)
 		write_cpp(f, msg_name, pkg, self.msg_specs[msg])
 		
-	def generate(self, folderPath):
+	def generate(self, folder_path):
 		""" generate the ros implementation for the avr code
 		"""
-		genPath = roslib.packages.find_resource('avr_bridge' ,'gen_avr.py')[0]
+		genPath = roslib.packages.find_resource(
+				'avr_bridge' ,'gen_avr.py')[0]
 		avrRosPath =  genPath[:-len('gen_avr.py')]+ 'avrRos'
-		
-		
+		inst_path = folder_path + '/avrRos'
+
 		try:
-			shutil.copytree(avrRosPath, folderPath+'/avrRos')
+			shutil.copytree(avrRosPath, inst_path)
 		except Exception as e:
-			print "avrRos already exists in ", folderPath
+			print "avrRos already exists in ", inst_path
 			print "The new files are overwriting the old files"
+			shutil.rmtree(inst_path)
+			shutil.copytree(avrRosPath, inst_path)
 		
 		for t in self.types:
 			self.generateMsgFile(folderPath+'/avrRos', t)
