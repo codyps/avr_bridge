@@ -464,9 +464,9 @@ class CGenerator():
 			shutil.copytree(avrRosPath, inst_path)
 		
 		for t in self.types:
-			self.generateMsgFile(folderPath+'/avrRos', t)
+			self.generateMsgFile(inst_path, t)
 		
-		self.generateRos(folderPath+'/avrRos')
+		self.generateRos(inst_path)
 		
 	
 	
