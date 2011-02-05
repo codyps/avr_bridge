@@ -431,7 +431,7 @@ class CGenerator():
 		f.line('}')
 
 
-		f.line('Ros ros("{0}", {1});'.format(self.config['name'], len(self.topicIds)))
+		f.line('Ros ros<{1}>("{0}");'.format(self.config['name'], len(self.topicIds)))
 		f.close()
 		
 		
