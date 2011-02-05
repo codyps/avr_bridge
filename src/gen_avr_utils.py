@@ -124,7 +124,7 @@ def serialize_primative(f, buffer_addr, field):
 		       '{0} + offset);'.format(buffer_addr))
 	else:
 		this = make_union_cast(f, field.name, ctype, clen)
-		f.line('{0}.real = this->{1}'.format(this, fname))
+		f.line('{0}.real = this->{1};'.format(this, fname))
 		for byte in range(0, clen):
 			mask = '0xFF'
 			f.line('*({0} + offset + {1}) = '.format(buffer_addr,
