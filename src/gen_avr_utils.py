@@ -127,9 +127,10 @@ def serialize_primative(f, buffer_addr, field):
 		f.line('{0}.real = this->{1}'.format(this, fname))
 		for byte in range(0, clen):
 			mask = '0xFF'
-			f.line('*({0} + offset + {1}) = ' +
-			       '({2}.base >> (8 * {3})) & {4}'.format(
-					buffer_addr, byte, this, byte, mask))
+			f.line('*({0} + offset + {1}) = '.format(buffer_addr,
+								byte)
+			     + '({2}.base >> (8 * {3})) & {4}'.format(
+					this, byte, mask))
 		f.line('offset += sizeof(this->{0});'.format(fname)) 
 
 def deserialize_primative(f, buffer_addr, field):
