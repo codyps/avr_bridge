@@ -92,11 +92,6 @@ public:
 
 	Ros(char const *node_name, uint8_t num_of_msg_types, FILE *_io);
 
-	//initCommunication is a hook for user implemented code
-	// this code should set up user implemented
-	// ros_putchar/ros_getchar functions
-	void initCommunication();
-
 	//Get the publisher for a topic
 	//You cannot advertise a topic that was not in the configuration
 	//file

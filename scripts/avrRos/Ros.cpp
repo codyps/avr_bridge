@@ -1,7 +1,6 @@
 /*
  * Ros.cpp
  *
- * 
  * Software License Agreement (BSD License)
  *
  * Copyright (c) 2011, Adam Stambler
