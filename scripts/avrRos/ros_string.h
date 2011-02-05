@@ -36,8 +36,8 @@
 #
  */
 
-#ifndef STRING_H_
-#define STRING_H_
+#ifndef ROS_STRING_H_
+#define ROS_STRING_H_
 #include <stdint.h>
 
 //this is only meant for rosdatatypes
