@@ -120,8 +120,8 @@ def serialize_primative(f, buffer_addr, field):
 	fname = field.name
 	
 	if (field.is_array or field.type == 'string'):
-		f.line('offset += this->%s.serialize(' +
-		       '%s + offset);'%(fname, buffer_addr))
+		f.line('offset += this->{0}.serialize('.format(fname) +
+		       '{0} + offset);'.format(buffer_addr))
 	else:
 		this = make_union_cast(f, field.name, ctype, clen)
 		f.line('{0}.real = this->{1}'.format(this, fname))
@@ -142,8 +142,8 @@ def deserialize_primative(f, buffer_addr, field):
 	fname = field.name
 
 	if (field.is_array or field.type == 'string'):
-		f.line('offset += this->%s.deserialize(' +
-		       '%s + offset);'%(fname, buffer_addr))
+		f.line('offset += this->{0}.deserialize('.format(fname) +
+		       '{0} + offset);'.format(buffer_addr))
 	else:
 		this = make_union_cast(f, fname, ctype, clen)
 		f.line('{0}.base = 0'.format(this))
