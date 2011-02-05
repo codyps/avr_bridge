@@ -194,10 +194,6 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.line('public:')
 	f.indent()
 
-	f.line('{0}();'.format(msg_name))
-	f.line('{0}(uint8_t *data);'.format(msg_name))
-	f.line('~{0}();'.format(msg_name))
-
 	f.line('uint16_t bytes();')
 	f.line('uint16_t serialize(uint8_t *out_buffer);')
 	f.line('uint16_t deserialize(uint8_t *data);')
@@ -305,7 +301,7 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	for field in msg_spec.parsed_fields():
 		if field.is_array:
 			if field.array_len:
-				constructor_init +='%s(%d),' %(field.name, field.array_len)
+				constructor_init += '%s(%d),' %(field.name, field.array_len)
 	if (len(constructor_init) > 3):
 		f.line('{0}::{0}()'.format(msg_name))
 		f.line( ':' + constructor_init[:-1])
@@ -404,7 +400,7 @@ class CGenerator():
 	This file contains the getTopicTag implementation along with
 	the instantiation of the ros object.
 		"""
-		fo = open(folderPath+'/ros_generated.cpp', 'w');
+		fo = open(folderPath+'/GenRos.h', 'w');
 		
 		f = SimpleStateC(fo)
 
@@ -415,7 +411,9 @@ class CGenerator():
 
 		f.macro_line('include "Ros.h"')
 
-		f.line('char Ros::getTopicTag(char *topic) {')
+		msg_ct = len(self.topicIds)
+
+		f.line('char Ros<{0}>::getTopicTag(char *topic) {{'.format(msg_ct))
 		f.indent()
 
 		for topic_name, topic_id in self.topicIds.iteritems():
@@ -430,8 +428,7 @@ class CGenerator():
 
 		f.line('}')
 
-
-		f.line('Ros <{1}> ros("{0}");'.format(self.config['name'], len(self.topicIds)))
+		f.line('Ros <{1}> ros("{0}");'.format(self.config['name'], msg_ct))
 		f.close()
 		
 		
