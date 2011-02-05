@@ -42,8 +42,8 @@
 
 class Msg {
 public:
-	virtual uint16_t serialize(uint8_t * outbuffer) = 0;
-	virtual uint16_t deserialize(uint8_t * data) = 0;
+	virtual uint16_t serialize(uint8_t *outbuffer) = 0;
+	virtual uint16_t deserialize(uint8_t *data) = 0;
 	virtual uint16_t bytes() = 0;
 };
 
