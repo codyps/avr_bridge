@@ -129,7 +129,7 @@ def serialize_primative(f, buffer_addr, field):
 			mask = '0xFF'
 			f.line('*({0} + offset + {1}) = '.format(buffer_addr,
 								byte)
-			     + '({0}.base >> (8 * {1})) & {2}'.format(
+			     + '({0}.base >> (8 * {1})) & {2};'.format(
 					this, byte, mask))
 		f.line('offset += sizeof(this->{0});'.format(fname)) 
 
@@ -230,7 +230,7 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.macro_line('endif /* {0} */'.format(guard))
 
 def serialize_msg(f, msg_spec):
-	f.line('int offset = 0;')
+	f.line('uint8_t offset = 0;')
 	
 	for field in msg_spec.parsed_fields():
 		if (field.is_builtin):
@@ -241,7 +241,7 @@ def serialize_msg(f, msg_spec):
 	f.line('return offset;')
 
 def deserialize_msg(f, msg_spec):
-	f.line('int offset = 0;')
+	f.line('uint8_t offset = 0;')
 	
 	for field in msg_spec.parsed_fields():
 		if (field.is_builtin):
@@ -262,7 +262,7 @@ def msg_size(f, msg_spec):
 	@param f :  output file object
 	@param msg_spec : the msg_spec of the msg
 	"""
-	f.line('int msgSize = 0;')
+	f.line('uint8_t msgSize = 0;')
 	
 	for field in msg_spec.parsed_fields():
 		if (field.is_builtin and not (field.type == 'string') ):
