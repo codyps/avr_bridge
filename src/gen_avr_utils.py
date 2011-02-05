@@ -6,43 +6,40 @@ the avr source code to communicate with the ros avr bridge.
 
 by Adam Stambler of Rutger University.
 
-This software was written with support of a research grant (R01ES014717)
- from the National Institute of Environmental Health Sciences.  
+Written with support of a research grant (R01ES014717)
+from the National Institute of Environmental Health Sciences.
 
-# Software License Agreement (BSD License)
-#
-# Copyright (c) 2011, Adam Stambler
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above
-#    copyright notice, this list of conditions and the following
-#    disclaimer in the documentation and/or other materials provided
-#    with the distribution.
-#  * Neither the name of Adam Stambler, Inc. nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-# ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-#
+Software License Agreement (BSD License)
 
+Copyright (c) 2011, Adam Stambler
+All rights reserved.
 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+ * Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above
+   copyright notice, this list of conditions and the following
+   disclaimer in the documentation and/or other materials provided
+   with the distribution.
+ * Neither the name of Adam Stambler, Inc. nor the names of its
+   contributors may be used to endorse or promote products derived
+   from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
 """
 import roslib; roslib.load_manifest('avr_bridge')
 
@@ -53,7 +50,6 @@ import traceback
 
 import roslib.msgs 
 import roslib.packages 
-
 
 import roslib.genpy 
 import yaml
@@ -124,13 +120,16 @@ def serialize_primative(f, buffer_addr, field):
 	fname = field.name
 	
 	if (field.is_array or field.type == 'string'):
-		f.line('offset += this->%s.serialize(%s + offset);'%(fname, buffer_addr))
+		f.line('offset += this->%s.serialize(' +
+		       '%s + offset);'%(fname, buffer_addr))
 	else:
 		this = make_union_cast(f, field.name, ctype, clen)
 		f.line('{0}.real = this->{1}'.format(this, fname))
 		for byte in range(0, clen):
 			mask = '0xFF'
-			f.line('*({0} + offset + {1}) = ({2}.base >> (8 * {3})) & {4}'.format(buffer_addr, byte, this, byte, mask))
+			f.line('*({0} + offset + {1}) = ' +
+			       '({2}.base >> (8 * {3})) & {4}'.format(
+					buffer_addr, byte, this, byte, mask))
 		f.line('offset += sizeof(this->{0});'.format(fname)) 
 
 def deserialize_primative(f, buffer_addr, field):
@@ -143,13 +142,15 @@ def deserialize_primative(f, buffer_addr, field):
 	fname = field.name
 
 	if (field.is_array or field.type == 'string'):
-		f.line('offset += this->%s.deserialize(%s + offset);'%(fname, buffer_addr))
+		f.line('offset += this->%s.deserialize(' +
+		       '%s + offset);'%(fname, buffer_addr))
 	else:
 		this = make_union_cast(f, fname, ctype, clen)
 		f.line('{0}.base = 0'.format(this))
 		for byte in range(0, clen):
 			byte_i = clen - byte - 1
-			f.line('{0}.base |= *({1} + offset + {2}) << (8 * {3})'.format(this, buffer_addr, byte_i, byte))
+			ol = '{0}.base |= *({1} + offset + {2}) << (8 * {3})' 
+			f.line(ol.format(this, buffer_addr, byte_i, byte))
 
 		f.line('this->{0} = {1}.real'.format(fname, this))
 		f.line('offset += sizeof(this->{0});'.format(fname))
@@ -299,7 +300,6 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 		f.line('}')
 	
 	#write constructor
-	f.line('{0}::{0}()'.format(msg_name))
 	#set fixed length arrays
 	constructor_init=''
 	for field in msg_spec.parsed_fields():
@@ -307,8 +307,9 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 			if field.array_len:
 				constructor_init +='%s(%d),' %(field.name, field.array_len)
 	if (len(constructor_init) > 3):
+		f.line('{0}::{0}()'.format(msg_name))
 		f.line( ':' + constructor_init[:-1])
-	f.line('{}')
+		f.line('{}')
 	
 	writeFunct('uint16_t', msg_name, 'serialize', 'uint8_t *data', lambda f: serialize_msg(f, msg_spec))
 	writeFunct('uint16_t', msg_name, 'deserialize', 'uint8_t *data', lambda f: deserialize_msg(f,msg_spec))
