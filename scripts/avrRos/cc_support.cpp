@@ -1,5 +1,12 @@
 #include <stdlib.h>
 
+extern "C"
+void __cxa_pure_virtual(void)
+{
+	for (;;)
+		;
+}
+
 void *operator new(size_t size)
 {
 	return malloc(size);
