@@ -425,7 +425,7 @@ class CGenerator():
 			f.dedent()
 
 
-		f.line('return 0')
+		f.line('return 0;')
 		f.dedent()
 
 		f.line('}')
