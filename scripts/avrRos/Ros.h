@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #define __deprecated __attribute__((deprecated))
 
@@ -53,27 +54,88 @@
 #define ROS_BUFFER_SIZE (UINT8_MAX + 1)
 typedef void (*ros_cb)(Msg *msg);
 
+/* XXX: there are 3 ways to go about giving class Ros the ability to send
+ * data over the wire:
+ *  1) use hard coded function names which (for some inexplicable
+ *     reason, use the stdio style even though it is uneeded)
+ *  2) pass a (FILE *) to the Ros constructor.
+ *  3) pass a class implimenting a send_packet method of some sort.
+ *
+ * Lets try to get #3 in here
+ */
+int ros_putchar(char c, FILE *stream);
+int ros_getchar(FILE *stream);
+static FILE *ros_io = fdevopen(ros_putchar, ros_getchar);
+
+enum PktType {
+	PT_TOPIC = 0,
+	PT_SERVICE = 1,
+	PT_GETID = 0xff
+};
+
 struct PktHeader {
 		uint8_t packet_type;
-#define PT_TOPIC	(0)
-#define PT_SERVICE	(1)
-#define PT_GETID	(0xff)
 		uint8_t topic_tag;
 		uint16_t msg_length;
 };
 
 typedef uint8_t Publisher;
 
+template <size_t MSG_CT>
 struct RosInputCtx {
-	RosInputCtx(uint8_t _topic_tag_max);
-	bool append(char c);
-	void reset(void) {
-		buffer_index = 0;
+	RosInputCtx()
+		: buffer_index(0)
+	{}
+
+	bool append(char c)
+	{
+		/* the last call to append completed the packet, start over */
+		if (buffer_index == sizeof(this->header)
+				+ this->header.msg_length) {
+			this->reset();
+		}
+
+		if (buffer_index == (ROS_BUFFER_SIZE - 1)) {
+			this->reset();
+		}
+
+		this->buffer[this->buffer_index] = c;
+		this->buffer_index++;
+
+		bool header_completed = this->buffer_index ==
+			sizeof(this->header);
+		bool packet_completed = this->buffer_index ==
+			this->header.msg_length + sizeof(this->header);
+		if (header_completed) {
+			/* is the packet type something we know about? */
+			if ((this->header.packet_type != PT_TOPIC) &&
+					(this->header.packet_type != PT_GETID)) {
+				this->reset();
+				return false;
+			}
+
+			/* does the topic_tag make sense? */
+			if (this->header.topic_tag >= MSG_CT) {
+				this->reset();
+				return false;
+			}
+
+			/* does the msg_length make sense? */
+			if (this->header.msg_length >= ROS_BUFFER_SIZE) {
+				this->reset();
+				return false;
+			}
+
+			return false;
+		} else if (packet_completed) {
+			return true;
+		}
+		return false;
 	}
 
-	/* only used for a sanity check */
-	uint8_t topic_tag_max;
-
+	void reset(void) {
+		this->buffer_index = 0;
+	}
 
 	/* buffer incomming chars. */
 	union {
@@ -85,48 +147,113 @@ struct RosInputCtx {
 	uint8_t buffer_index;
 };
 
+template <size_t MSG_CT>
 class Ros {
 public:
 	__deprecated
-	Ros(char const *node_name, uint8_t num_of_msg_types);
+	Ros(char const *node_name)
+		: name(node_name)
+	{
+		this->io = ros_io;
+	}
 
-	Ros(char const *node_name, uint8_t num_of_msg_types, FILE *_io);
+	Ros(char const *node_name, FILE *_io)
+		: io(_io)
+		, name(node_name)
+	{}
 
 	//Get the publisher for a topic
 	//You cannot advertise a topic that was not in the configuration
 	//file
-	Publisher advertise(char const *topic);
+	Publisher advertise(char const *topic)
+	{
+		return getTopicTag(topic);
+	}
 
-	void publish(Publisher pub, Msg *msg);
-	void subscribe(char const *name, ros_cb funct, Msg *msg);
+	void publish(Publisher pub, Msg *msg)
+	{
+		uint16_t bytes = msg->serialize(this->outBuffer);
+		this->send_pkt(PT_TOPIC, pub, outBuffer, bytes);
+	}
+	void subscribe(char const *topic, ros_cb funct, Msg *msg)
+	{
+		int tag = getTopicTag(topic);
+		this->cb_list[tag] = funct;
+		this->msg_list[tag] = msg;
+	}
 
-	void spin(char c);
+	void spin(char c)
+	{
+		if (this->in_ctx.append(c)) {
+			this->process_pkt();
+		}
+	}
 
 	__deprecated
-	void spin();
+	void spin()
+	{
+		int com_byte = getc(this->io);
 
-	~Ros();
+		while (com_byte != -1) {
+			this->spin(com_byte);
+
+			com_byte = getc(this->io);
+		}
+	}
+
 private:
 	FILE *io;
 
 	ROS::string name;
 
-	ros_cb cb_list[10];
-	Msg *msg_list[10];
+	ros_cb cb_list[MSG_CT];
+	Msg *msg_list[MSG_CT];
 	uint8_t outBuffer[ROS_BUFFER_SIZE];
 
-	void getID();
-	void process_pkt();
+	void send_id()
+	{
+		uint16_t size = this->name.serialize(this->outBuffer);
+		this->send_pkt(PT_GETID, 0, outBuffer, size);
+	}
+
+	void process_pkt()
+	{
+		switch(this->in_ctx.header.packet_type) {
+		case PT_GETID:
+			this->send_id();
+			break;
+		case PT_TOPIC:
+			this->msg_list[this->in_ctx.header.topic_tag]->
+				deserialize(this->in_ctx.buffer +
+						sizeof(PktHeader));
+			this->cb_list[this->in_ctx.header.topic_tag](this->
+					msg_list[this->in_ctx.header.topic_tag]);
+			break;
+		case PT_SERVICE:
+			break;
+		}
+	}
 
 	/* XXX: use an enum for pkt_type and topic to prevent swapping? */
-	void send_pkt(uint8_t pkt_type, uint8_t topic,
-			uint8_t const *data, uint8_t data_len);
+	void send_pkt(enum PktType pkt_type, uint8_t topic,
+			uint8_t const *data, uint8_t data_len)
+	{
+		PktHeader head = {
+			pkt_type,
+			topic,
+			data_len
+		};
+
+		fwrite(&head, sizeof(head), 1, this->io);
+
+		fwrite(data, data_len, 1, this->io);
+	}
 
 	/* given the character string of a topic, determines the numeric tag to
 	 * place in a packet */
 	char getTopicTag(char const *topic);
 
-	RosInputCtx in_ctx;
+	RosInputCtx <MSG_CT> in_ctx;
 };
 
 /* Declaration is generated by the C++ code generation scripts, see
