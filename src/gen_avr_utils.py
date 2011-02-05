@@ -147,13 +147,13 @@ def deserialize_primative(f, buffer_addr, field):
 		       '{0} + offset);'.format(buffer_addr))
 	else:
 		this = make_union_cast(f, fname, ctype, clen)
-		f.line('{0}.base = 0'.format(this))
+		f.line('{0}.base = 0;'.format(this))
 		for byte in range(0, clen):
 			byte_i = clen - byte - 1
 			ol = '{0}.base |= *({1} + offset + {2}) << (8 * {3})' 
 			f.line(ol.format(this, buffer_addr, byte_i, byte))
 
-		f.line('this->{0} = {1}.real'.format(fname, this))
+		f.line('this->{0} = {1}.real;'.format(fname, this))
 		f.line('offset += sizeof(this->{0});'.format(fname))
 				
 
