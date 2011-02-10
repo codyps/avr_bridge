@@ -2,11 +2,7 @@
 #include <stdio.h>
 
 namespace ros {
-	int ros_getchar(FILE *f) {
-		return -1;
-	}
-
-	int ros_putchar(char c, FILE *f) {
+	int putchar(char c, FILE *f) {
 		return -1;
 	}
 }
