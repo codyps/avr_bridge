@@ -335,13 +335,16 @@ ALL_CPPFLAGS = -mmcu=$(MCU) -I. -x c++ $(CPPFLAGS) $(GENDEPFLAGS)
 ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 # Default target.
-all: build
+all: ros build
 
 rebuild: | clean build
 
 # Change the build target to build a HEX file or a library.
 build: elf hex eep lss sym
 #build: lib
+
+ros:
+	rosrun avr_bridge gen_avr.py call_response.yaml .
 
 
 elf: $(TARGET).elf
