@@ -51,8 +51,10 @@
 #define UINT8_MAX 0xff
 #endif
 
-#define ROS_BUFFER_SIZE (UINT8_MAX + 1)
-typedef void (*ros_cb)(Msg *msg);
+namespace ros {
+
+typedef uint8_t MsgSz;
+typedef void (RosCb)(Msg *msg);
 
 /* XXX: there are 3 ways to go about giving class Ros the ability to send
  * data over the wire:
@@ -74,16 +76,16 @@ enum PktType {
 };
 
 struct PktHeader {
-		uint8_t packet_type;
-		uint8_t topic_tag;
-		uint16_t msg_length;
+	uint8_t packet_type;
+	uint8_t topic_tag;
+	uint16_t msg_length;
 };
 
 typedef uint8_t Publisher;
 
-template <size_t MSG_CT>
-struct RosInputCtx {
-	RosInputCtx()
+template <size_t MSG_CT, size_t BUFFER_SZ>
+struct InputCtx {
+	InputCtx()
 		: buffer_index(0)
 	{}
 
@@ -95,7 +97,7 @@ struct RosInputCtx {
 			this->reset();
 		}
 
-		if (buffer_index == (ROS_BUFFER_SIZE - 1)) {
+		if (buffer_index == (BUFFER_SZ - 1)) {
 			this->reset();
 		}
 
@@ -121,7 +123,7 @@ struct RosInputCtx {
 			}
 
 			/* does the msg_length make sense? */
-			if (this->header.msg_length >= ROS_BUFFER_SIZE) {
+			if (this->header.msg_length >= BUFFER_SZ) {
 				this->reset();
 				return false;
 			}
@@ -139,7 +141,7 @@ struct RosInputCtx {
 
 	/* buffer incomming chars. */
 	union {
-		uint8_t buffer[ROS_BUFFER_SIZE];
+		uint8_t buffer[BUFFER_SZ];
 		/* convenient access to the buffer */
 		PktHeader header;
 	};
@@ -147,17 +149,18 @@ struct RosInputCtx {
 	uint8_t buffer_index;
 };
 
-template <size_t MSG_CT>
-class Ros {
+
+template <size_t MSG_CT, size_t BUFFER_SZ>
+class NodeHandle {
 public:
 	__deprecated
-	Ros(char const *node_name)
+	NodeHandle(char const *node_name)
 		: name(node_name)
 	{
 		this->io = ros_io;
 	}
 
-	Ros(char const *node_name, FILE *_io)
+	NodeHandle(char const *node_name, FILE *_io)
 		: io(_io)
 		, name(node_name)
 	{}
@@ -172,12 +175,12 @@ public:
 
 	void publish(Publisher pub, Msg *msg)
 	{
-		uint16_t bytes = msg->serialize(this->outBuffer);
+		MsgSz bytes = msg->serialize(this->outBuffer);
 		this->send_pkt(PT_TOPIC, pub, outBuffer, bytes);
 	}
-	void subscribe(char const *topic, ros_cb funct, Msg *msg)
+	void subscribe(char const *topic, RosCb *funct, Msg *msg)
 	{
-		int tag = getTopicTag(topic);
+		uint8_t tag = getTopicTag(topic);
 		this->cb_list[tag] = funct;
 		this->msg_list[tag] = msg;
 	}
@@ -204,15 +207,15 @@ public:
 private:
 	FILE *io;
 
-	ROS::string name;
+	ros::string name;
 
-	ros_cb cb_list[MSG_CT];
+	RosCb *cb_list[MSG_CT];
 	Msg *msg_list[MSG_CT];
-	uint8_t outBuffer[ROS_BUFFER_SIZE];
+	uint8_t outBuffer[BUFFER_SZ];
 
 	void send_id()
 	{
-		uint16_t size = this->name.serialize(this->outBuffer);
+		MsgSz size = this->name.serialize(this->outBuffer);
 		this->send_pkt(PT_GETID, 0, outBuffer, size);
 	}
 
@@ -236,7 +239,7 @@ private:
 
 	/* XXX: use an enum for pkt_type and topic to prevent swapping? */
 	void send_pkt(enum PktType pkt_type, uint8_t topic,
-			uint8_t const *data, uint8_t data_len)
+			uint8_t const *data, MsgSz data_len)
 	{
 		PktHeader head = {
 			pkt_type,
@@ -253,10 +256,12 @@ private:
 	 * place in a packet */
 	char getTopicTag(char const *topic);
 
-	RosInputCtx <MSG_CT> in_ctx;
+	InputCtx <MSG_CT, BUFFER_SZ> in_ctx;
 };
 
 /* Generated Ros stuff. */
 #include "GenRos.h"
+
+} /* namespace ros */
 
 #endif /* ROS_H_ */
