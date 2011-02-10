@@ -190,7 +190,7 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.line('namespace {0} {{'.format(pkg))
 	f.indent()
 
-	f.line('class {0} : public Msg {{'.format(msg_name))
+	f.line('class {0} : public ros::Msg {{'.format(msg_name))
 	f.line('public:')
 	f.indent()
 
