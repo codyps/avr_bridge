@@ -1,8 +1,8 @@
-#include <avrRos/ros.h>
+#include <avr_ros/ros.h>
 #include <stdio.h>
 
 namespace ros {
-	int putchar(char c, FILE *f) {
+	int fputc(char c, FILE *f) {
 		return -1;
 	}
 }

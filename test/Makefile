@@ -48,7 +48,7 @@ VERSION= arduino-ros-unknown
 SRC = $(wildcard *.c)
 
 # List C++ source files here. (C dependencies are automatically generated.)
-CCSRC = $(wildcard *.cpp) $(wildcard avrRos/*.cpp)
+CCSRC = $(wildcard *.cpp) $(wildcard avr_ros/*.cpp)
 
 
 # List Assembler source files here.
@@ -75,7 +75,7 @@ DEBUG = dwarf-2
 #     Each directory must be seperated by a space.
 #     Use forward slashes for directory separators.
 #     For a directory that has spaces, enclose it in quotes.
-EXTRAINCDIRS = ./avrRos
+EXTRAINCDIRS =
 
 # Compiler flag to set the C Standard level.
 #     c89   = "ANSI" C
