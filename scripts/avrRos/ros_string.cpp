@@ -47,12 +47,12 @@ string::string(){
 	maxlength = 0;
 }
 
-string::string(uint16_t maxLength){
+string::string(MsgSz maxLength){
 	maxLength=0;
 	this->setMaxLength(maxLength);
 }
 
-void string::setMaxLength( uint16_t maxLength){
+void string::setMaxLength(MsgSz maxLength){
 	if (this->maxlength <=0){
 		data = (char*) malloc(maxLength+1);
 		this->maxlength = maxLength;
@@ -65,7 +65,7 @@ string::string(char const *str){
 }
 
 void string::setString(char const *str){
-	int l = strlen(str);
+	MsgSz l = strlen(str);
 
 	if (maxlength<=0) setMaxLength(l);
 
@@ -76,15 +76,15 @@ void string::setString(char const *str){
 
 }
 
-uint16_t string::serialize(uint8_t * buffer){
-	uint32_t length = strlen(data);
+MsgSz string::serialize(uint8_t * buffer){
+	MsgSz length = strlen(data);
 	memcpy(buffer, &length, 4);
 	memcpy(buffer+4, data, length);
 	return length+4;
 }
 
-uint16_t string::deserialize(uint8_t* buffer){
-	uint32_t length;
+MsgSz string::deserialize(uint8_t* buffer){
+	MsgSz length;
 	memcpy(&length, buffer,4);
 	//deal with the overflow quietly, just take as much as possible
 	if (length > maxlength){
@@ -99,8 +99,8 @@ uint16_t string::deserialize(uint8_t* buffer){
 	return length+4;
 }
 
-uint16_t string::bytes(){
-	uint32_t length = strlen(data);
+MsgSz string::bytes(){
+	MsgSz length = strlen(data);
 	return length+4;
 }
 
