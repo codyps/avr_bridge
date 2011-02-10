@@ -406,6 +406,8 @@ class CGenerator():
 
 		msg_ct = len(self.topicIds)
 
+		f.line('namespace ros {')
+
 		f.line('char Ros<{0}>::getTopicTag(char *topic) {{'.format(msg_ct))
 		f.indent()
 
@@ -419,9 +421,11 @@ class CGenerator():
 		f.line('return 0;')
 		f.dedent()
 
-		f.line('}')
+		f.line('} /* getTopicTag */')
 
-		f.line('Ros <{1}> ros("{0}");'.format(self.config['name'], msg_ct))
+		f.line('} /* namespace ros */')
+
+		f.line('NodeHandle <{1}> node("{0}");'.format(self.config['name'], msg_ct))
 		f.close()
 		
 		

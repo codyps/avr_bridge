@@ -259,9 +259,9 @@ private:
 	InputCtx <MSG_CT, BUFFER_SZ> in_ctx;
 };
 
+} /* namespace ros */
+
 /* Generated Ros stuff. */
 #include "GenRos.h"
-
-} /* namespace ros */
 
 #endif /* ROS_H_ */
