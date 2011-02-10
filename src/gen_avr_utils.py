@@ -306,9 +306,6 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 		f.line('}')
 
 	f.macro_line('include "{0}.h"'.format(msg_name))
-	f.macro_line('include <stdio.h>')
-	f.macro_line('include <ros.h>')
-	
 	f.line('using namespace {0};'.format(pkg))
 	
 	writeFunct('ros::MsgSz', msg_name, 'serialize', 'uint8_t *in_data', lambda f: gen_serialize(f, msg_spec, 'in_data'))
