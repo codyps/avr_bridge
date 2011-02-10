@@ -191,15 +191,15 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.macro_line('ifndef {0}'.format(guard))
 	f.macro_line('define {0}'.format(guard))
 
-	f.macro_line('include "Msg.h"')
-	f.macro_line('include "vector.h"')
-	f.macro_line('include "ros_string.h"')
+	f.macro_line('include "avr_ros/Msg.h"')
+	f.macro_line('include "avr_ros/vector.h"')
+	f.macro_line('include "avr_ros/ros_string.h"')
 
 	#write includes
 	for field in msg_spec.parsed_fields():
 		if not field.is_builtin:
 			incPkg, incName = extract_ros_type(field)
-			f.macro_line('include "{0}.h"'.format(incName))
+			f.macro_line('include "avr_ros/{0}.h"'.format(incName))
 	
 	#open namespace
 
@@ -305,7 +305,7 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 		f.dedent()
 		f.line('}')
 
-	f.macro_line('include "{0}.h"'.format(msg_name))
+	f.macro_line('include "avr_ros/{0}.h"'.format(msg_name))
 	f.line('using namespace {0};'.format(pkg))
 	
 	writeFunct('ros::MsgSz', msg_name, 'serialize', 'uint8_t *in_data', lambda f: gen_serialize(f, msg_spec, 'in_data'))
