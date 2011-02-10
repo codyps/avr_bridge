@@ -66,9 +66,8 @@ typedef void (RosCb)(Msg const *msg);
  *
  * Lets try to get #3 in here
  */
-int ros_putchar(char c, FILE *stream);
-int ros_getchar(FILE *stream);
-static FILE *ros_io = fdevopen(ros_putchar, ros_getchar);
+int putchar(char c, FILE *stream);
+static FILE *ros_io = fdevopen(putchar, NULL);
 
 enum PktType {
 	PT_TOPIC = 0,
@@ -179,6 +178,7 @@ public:
 		MsgSz bytes = msg->serialize(this->outBuffer);
 		this->send_pkt(PT_TOPIC, pub, outBuffer, bytes);
 	}
+
 	void subscribe(char const *topic, RosCb *funct, Msg *msg)
 	{
 		uint8_t tag = getTopicTag(topic);
@@ -190,18 +190,6 @@ public:
 	{
 		if (this->in_ctx.append(c)) {
 			this->process_pkt();
-		}
-	}
-
-	__deprecated
-	void spin()
-	{
-		int com_byte = getc(this->io);
-
-		while (com_byte != -1) {
-			this->spin(com_byte);
-
-			com_byte = getc(this->io);
 		}
 	}
 
