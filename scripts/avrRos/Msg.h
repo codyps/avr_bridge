@@ -39,14 +39,15 @@
 #define MSG_H_
 
 #include <stdint.h>
+#include <ros_types.h>
 
 namespace ros {
 
 class Msg {
 public:
-	virtual uint16_t serialize(uint8_t *outbuffer) = 0;
-	virtual uint16_t deserialize(uint8_t *data) = 0;
-	virtual uint16_t bytes() = 0;
+	virtual MsgSz serialize(uint8_t *outbuffer) = 0;
+	virtual MsgSz deserialize(uint8_t *data) = 0;
+	virtual MsgSz bytes() = 0;
 };
 
 }

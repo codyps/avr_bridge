@@ -37,13 +37,15 @@
 
 #ifndef ROS_H_
 #define ROS_H_
-#include "ros_string.h"
-#include "Msg.h"
 
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+
+#include "ros_types.h"
+#include "ros_string.h"
+#include "Msg.h"
 
 #define __deprecated __attribute__((deprecated))
 
@@ -53,7 +55,6 @@
 
 namespace ros {
 
-typedef uint8_t MsgSz;
 typedef void (RosCb)(Msg *msg);
 
 /* XXX: there are 3 ways to go about giving class Ros the ability to send
@@ -254,7 +255,8 @@ private:
 
 	/* given the character string of a topic, determines the numeric tag to
 	 * place in a packet */
-	char getTopicTag(char const *topic);
+	/* char getTopicTag(char const *topic); */
+#include "ros_get_topic_tag.h"
 
 	InputCtx <MSG_CT, BUFFER_SZ> in_ctx;
 };
@@ -262,6 +264,6 @@ private:
 } /* namespace ros */
 
 /* Generated Ros stuff. */
-#include "GenRos.h"
+#include "ros_node_instance.h"
 
 #endif /* ROS_H_ */

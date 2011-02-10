@@ -39,7 +39,7 @@
 #ifndef ROS_STRING_H_
 #define ROS_STRING_H_
 #include <stdint.h>
-#include <ros.h>
+#include <ros_types.h>
 
 //this is only meant for rosdatatypes
 
@@ -63,5 +63,5 @@ private:
 	MsgSz maxlength;
 };
 
-}
+} /* namespace ros */
 #endif /* STRING_H_ */
