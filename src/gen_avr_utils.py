@@ -224,53 +224,6 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	#closing header guards
 	f.macro_line('endif /* {0} */'.format(guard))
 
-def serialize_msg(f, msg_spec):
-	f.line('MsgSz offset = 0;')
-	
-	for field in msg_spec.parsed_fields():
-		if (field.is_builtin):
-			serialize_primitive(f, 'data', field)
-		elif (field.is_array and field.array_len):
-			serialize_farray(f, 'data', field)
-		else:
-			f.line('offset += this->{0}.serialize({1} + offset);'.format(field.name, 'data'))
-			
-	f.line('return offset;')
-
-def deserialize_msg(f, msg_spec):
-	f.line('MsgSz offset = 0;')
-	
-	for field in msg_spec.parsed_fields():
-		if (field.is_builtin):
-			deserialize_primitive(f, 'data', field)
-		else:
-			f.line('offset += this->{0}.deserialize({1} + offset);'.format(field.name, 'data'))
-			
-	f.line('return offset;')
-
-
-
-def w_msg_fn_bytes(f, msg_spec):
-	"""
-	write out the bytes() member function for a msg.  
-	iterate through the msg fields and extracts either their size if 
-	they are a primitive type, or call the bytes() of that msg.
-
-	@param f :  output file object
-	@param msg_spec : the msg_spec of the msg
-	"""
-	f.line('MsgSz msgSize = 0;')
-	
-	for field in msg_spec.parsed_fields():
-		if (field.is_builtin and not (field.type == 'string') ):
-			fpkg, ftype = extract_ros_type(field)
-			ctype, clen = primitives[ftype]
-			f.line('msgSize += sizeof({0});'.format(ctype))
-		else:
-			f.line('msgSize += {0}.bytes();'.format(field.name))
-	
-	f.line('return msgSize;')
-	
 
 def write_cpp(f, msg_name, pkg, msg_spec):
 	"""
@@ -280,12 +233,44 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	@param pkg : pkg that the message is found in
 	@param msg_spec : msg_spec object of the msg
 	"""
+	def gen_serialize(f, msg_spec):
+		f.line('MsgSz offset = 0;')
+		for field in msg_spec.parsed_fields():
+			if (field.is_builtin):
+				serialize_primitive(f, 'data', field)
+			else:
+				f.line('offset += this->{0}.serialize({1} + offset);'.format(field.name, 'data'))
+		f.line('return offset;')
 
-	f.macro_line('include "{0}.h"'.format(msg_name))
-	f.macro_line('include <ros.h>')
-	f.macro_line('include <stdio.h>')
-	
-	f.line('using namespace {0};'.format(pkg))
+	def gen_deserialize(f, msg_spec):
+		f.line('MsgSz offset = 0;')
+		for field in msg_spec.parsed_fields():
+			if (field.is_builtin):
+				deserialize_primitive(f, 'data', field)
+			else:
+				f.line('offset += this->{0}.deserialize({1} + offset);'.format(field.name, 'data'))
+		f.line('return offset;')
+
+	def gen_bytes(f, msg_spec):
+		"""
+		write out the bytes() member function for a msg.  
+		iterate through the msg fields and extracts either their size if 
+		they are a primitive type, or call the bytes() of that msg.
+
+		@param f :  output file object
+		@param msg_spec : the msg_spec of the msg
+		"""
+		f.line('MsgSz msgSize = 0;')
+		
+		for field in msg_spec.parsed_fields():
+			if (field.is_builtin and not (field.type == 'string') ):
+				fpkg, ftype = extract_ros_type(field)
+				ctype, clen = primitives[ftype]
+				f.line('msgSize += sizeof({0});'.format(ctype))
+			else:
+				f.line('msgSize += {0}.bytes();'.format(field.name))
+		
+		f.line('return msgSize;')
 	
 	def writeFunct(rtype, msg, funct, args, implementation):
 		if rtype != '':
@@ -297,9 +282,14 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 		implementation(f)
 		f.dedent()
 		f.line('}')
+
+	f.macro_line('include "{0}.h"'.format(msg_name))
+	f.macro_line('include <stdio.h>')
+	f.macro_line('include <ros.h>')
+	
+	f.line('using namespace {0};'.format(pkg))
 	
 	#write constructor
-	#set fixed length arrays
 	constructor_init=''
 	for field in msg_spec.parsed_fields():
 		if field.is_array:
@@ -310,9 +300,9 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 		f.line( ':' + constructor_init[:-1])
 		f.line('{}')
 	
-	writeFunct('MsgSz', msg_name, 'serialize', 'uint8_t *data', lambda f: serialize_msg(f, msg_spec))
-	writeFunct('MsgSz', msg_name, 'deserialize', 'uint8_t *data', lambda f: deserialize_msg(f,msg_spec))
-	writeFunct('MsgSz', msg_name, 'bytes', '', lambda f: w_msg_fn_bytes(f, msg_spec))
+	writeFunct('MsgSz', msg_name, 'serialize', 'uint8_t *in_data', lambda f: gen_serialize(f, msg_spec))
+	writeFunct('MsgSz', msg_name, 'deserialize', 'uint8_t *out_data', lambda f: gen_deserialize(f,msg_spec))
+	writeFunct('MsgSz', msg_name, 'bytes', '', lambda f: gen_bytes(f, msg_spec))
 
 class CGenerator():
 	"""
