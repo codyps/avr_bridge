@@ -39,7 +39,7 @@
 #ifndef ROS_STRING_H_
 #define ROS_STRING_H_
 #include <stdint.h>
-#include <Ros.h>
+#include <ros.h>
 
 //this is only meant for rosdatatypes
 
