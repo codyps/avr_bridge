@@ -207,7 +207,7 @@ public:
 private:
 	FILE *io;
 
-	ros::string name;
+	string name;
 
 	RosCb *cb_list[MSG_CT];
 	Msg *msg_list[MSG_CT];
