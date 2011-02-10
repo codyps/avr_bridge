@@ -39,7 +39,7 @@
 #define MSG_H_
 
 #include <stdint.h>
-#include <ros_types.h>
+#include <avr_ros/ros_types.h>
 
 namespace ros {
 

@@ -43,9 +43,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "ros_types.h"
-#include "ros_string.h"
-#include "Msg.h"
+#include "avr_ros/ros_types.h"
+#include "avr_ros/ros_string.h"
+#include "avr_ros/Msg.h"
 
 #define __deprecated __attribute__((deprecated))
 
