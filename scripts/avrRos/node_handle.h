@@ -55,7 +55,7 @@
 
 namespace ros {
 
-typedef void (RosCb)(Msg *msg);
+typedef void (RosCb)(Msg const *msg);
 
 /* XXX: there are 3 ways to go about giving class Ros the ability to send
  * data over the wire:
