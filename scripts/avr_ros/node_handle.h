@@ -66,8 +66,8 @@ typedef void (RosCb)(Msg const *msg);
  *
  * Lets try to get #3 in here
  */
-int putchar(char c, FILE *stream);
-static FILE *ros_io = fdevopen(putchar, NULL);
+int fputc(char c, FILE *stream);
+static FILE *ros_io = fdevopen(fputc, NULL);
 
 enum PktType {
 	PT_TOPIC = 0,
