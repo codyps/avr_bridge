@@ -233,22 +233,22 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	@param pkg : pkg that the message is found in
 	@param msg_spec : msg_spec object of the msg
 	"""
-	def gen_serialize(f, msg_spec):
+	def gen_serialize(f, msg_spec, array_n):
 		f.line('ros::MsgSz offset = 0;')
 		for field in msg_spec.parsed_fields():
 			if (field.is_builtin):
-				serialize_primitive(f, 'data', field)
+				serialize_primitive(f, array_n, field)
 			else:
-				f.line('offset += this->{0}.serialize({1} + offset);'.format(field.name, 'data'))
+				f.line('offset += this->{0}.serialize({1} + offset);'.format(field.name, array_n))
 		f.line('return offset;')
 
-	def gen_deserialize(f, msg_spec):
+	def gen_deserialize(f, msg_spec, array_n):
 		f.line('ros::MsgSz offset = 0;')
 		for field in msg_spec.parsed_fields():
 			if (field.is_builtin):
-				deserialize_primitive(f, 'data', field)
+				deserialize_primitive(f, array_n, field)
 			else:
-				f.line('offset += this->{0}.deserialize({1} + offset);'.format(field.name, 'data'))
+				f.line('offset += this->{0}.deserialize({1} + offset);'.format(field.name, array_n))
 		f.line('return offset;')
 
 	def gen_bytes(f, msg_spec):
@@ -300,8 +300,8 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 		f.line( ':' + constructor_init[:-1])
 		f.line('{}')
 	
-	writeFunct('ros::MsgSz', msg_name, 'serialize', 'uint8_t *in_data', lambda f: gen_serialize(f, msg_spec))
-	writeFunct('ros::MsgSz', msg_name, 'deserialize', 'uint8_t *out_data', lambda f: gen_deserialize(f,msg_spec))
+	writeFunct('ros::MsgSz', msg_name, 'serialize', 'uint8_t *in_data', lambda f: gen_serialize(f, msg_spec, 'in_data'))
+	writeFunct('ros::MsgSz', msg_name, 'deserialize', 'uint8_t *out_data', lambda f: gen_deserialize(f,msg_spec, 'out_data'))
 	writeFunct('ros::MsgSz', msg_name, 'bytes', '', lambda f: gen_bytes(f, msg_spec))
 
 class CGenerator():
@@ -419,7 +419,7 @@ class CGenerator():
 		
 	def gen_node_instance(self, f):
 		msg_ct = len(self.topic_ids)
-		f.line('NodeHandle<{1}, 256> node("{0}");'.format(self.config['name'], msg_ct))
+		f.line('ros::NodeHandle<{1}, 256> node("{0}");'.format(self.config['name'], msg_ct))
 
 	def generateMsgFile(self, folderPath, msg):
 		pkg, msg_name = msg.split('/')
