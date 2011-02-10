@@ -405,7 +405,7 @@ class CGenerator():
 
 		msg_ct = len(self.topic_ids)
 
-		f.line('char getTopicTag(char *topic) {{'.format(msg_ct))
+		f.line('char getTopicTag(char const* topic) {{'.format(msg_ct))
 		f.indent()
 
 		for topic_name, topic_id in self.topic_ids.iteritems():

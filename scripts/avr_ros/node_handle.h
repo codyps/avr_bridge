@@ -153,7 +153,6 @@ struct InputCtx {
 template <size_t MSG_CT, size_t BUFFER_SZ>
 class NodeHandle {
 public:
-	__deprecated
 	NodeHandle(char const *node_name)
 		: name(node_name)
 	{
