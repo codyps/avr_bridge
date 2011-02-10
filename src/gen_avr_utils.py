@@ -101,6 +101,7 @@ def type_to_rint(t):
 	return conv[t]
 
 def make_union_cast(cf, field_name, otype, olen):
+	field_name = field_name.partition('[')[0]
 	uname = 'u_{0}'.format(field_name)
 
 	cf.line('union {')
@@ -119,19 +120,38 @@ def serialize_primitive(f, buffer_addr, field):
 	ctype, clen = primitives[ftype]
 	fname = field.name
 	
-	if (field.is_array or field.type == 'string'):
-		f.line('offset += this->{0}.serialize('.format(fname) +
-		       '{0} + offset);'.format(buffer_addr))
-	else:
-		this = make_union_cast(f, field.name, ctype, clen)
-		f.line('{0}.real = this->{1};'.format(this, fname))
-		for byte in range(0, clen):
-			mask = '0xFF'
-			f.line('*({0} + offset + {1}) = '.format(buffer_addr,
-								byte)
-			     + '({0}.base >> (8 * {1})) & {2};'.format(
-					this, byte, mask))
-		f.line('offset += sizeof(this->{0});'.format(fname)) 
+	this = make_union_cast(f, fname, ctype, clen)
+	f.line('{0}.real = this->{1};'.format(this, fname))
+	for byte in range(0, clen):
+		mask = '0xFF'
+		f.line('*({0} + offset + {1}) = '.format(buffer_addr,
+							byte)
+		     + '({0}.base >> (8 * {1})) & {2};'.format(
+				this, byte, mask))
+	f.line('offset += sizeof(this->{0});'.format(fname)) 
+
+
+def serialize_array(f, buf_n, field):
+	alen = field.array_len
+	f.line('for(ros::MsgSz i = 0; i < {0}; i++) {{'.format(alen))
+	f.indent()
+	fn = field.name
+	field.name = field.name + '[i]'
+	serialize_primitive(f, buf_n, field)
+	field.name = fn
+	f.dedent()
+	f.line('}')
+
+def deserialize_array(f, buf_n, field):
+	alen = field.array_len
+	f.line('for(ros::MsgSz i = 0; i < {0}; i++) {{'.format(alen))
+	f.indent()
+	fn = field.name
+	field.name = field.name + '[i]'
+	deserialize_primitive(f, buf_n, field)
+	field.name = fn
+	f.dedent()
+	f.line('}')
 
 def deserialize_primitive(f, buffer_addr, field):
 	"""
@@ -142,18 +162,14 @@ def deserialize_primitive(f, buffer_addr, field):
 	ctype, clen = primitives[ftype]
 	fname = field.name
 
-	if (field.is_array or field.type == 'string'):
-		f.line('offset += this->{0}.deserialize('.format(fname) +
-		       '{0} + offset);'.format(buffer_addr))
-	else:
-		this = make_union_cast(f, fname, ctype, clen)
-		f.line('{0}.base = 0;'.format(this))
-		for byte in range(0, clen):
-			ol = '{0}.base |= ((typeof({0}.base)) (*({1} + offset + {2}))) << (8 * {3});' 
-			f.line(ol.format(this, buffer_addr, byte, byte))
+	this = make_union_cast(f, fname, ctype, clen)
+	f.line('{0}.base = 0;'.format(this))
+	for byte in range(0, clen):
+		ol = '{0}.base |= ((typeof({0}.base)) (*({1} + offset + {2}))) << (8 * {3});' 
+		f.line(ol.format(this, buffer_addr, byte, byte))
 
-		f.line('this->{0} = {1}.real;'.format(fname, this))
-		f.line('offset += sizeof(this->{0});'.format(fname))
+	f.line('this->{0} = {1}.real;'.format(fname, this))
+	f.line('offset += sizeof(this->{0});'.format(fname))
 				
 
 def write_header_file(f, msg_name, pkg, msg_spec):
@@ -209,7 +225,7 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 			ftype, clen = primitives[ftype]
 		if field.is_array:
 			if field.array_len:
-				f.line('ros::vector<{0}> {1}; // fixed at length {2}'.format(ftype, field.name, field.array_len))
+				f.line('{0} {1}[{2}];'.format(ftype, field.name, field.array_len))
 			else:
 				f.line('ros::vector<{0}> {1};'.format(ftype, field.name))
 		else:
@@ -224,6 +240,8 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	#closing header guards
 	f.macro_line('endif /* {0} */'.format(guard))
 
+def field_is_prim(field):
+	return field.is_builtin and field.type != 'string' and not field.is_array
 
 def write_cpp(f, msg_name, pkg, msg_spec):
 	"""
@@ -236,7 +254,9 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	def gen_serialize(f, msg_spec, array_n):
 		f.line('ros::MsgSz offset = 0;')
 		for field in msg_spec.parsed_fields():
-			if (field.is_builtin):
+			if (field.is_array and field.array_len):
+				serialize_array(f, array_n, field)
+			elif (field_is_prim(field)):
 				serialize_primitive(f, array_n, field)
 			else:
 				f.line('offset += this->{0}.serialize({1} + offset);'.format(field.name, array_n))
@@ -245,7 +265,9 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	def gen_deserialize(f, msg_spec, array_n):
 		f.line('ros::MsgSz offset = 0;')
 		for field in msg_spec.parsed_fields():
-			if (field.is_builtin):
+			if (field.is_array and field.array_len):
+				deserialize_array(f, array_n, field)
+			elif (field_is_prim(field)):
 				deserialize_primitive(f, array_n, field)
 			else:
 				f.line('offset += this->{0}.deserialize({1} + offset);'.format(field.name, array_n))
@@ -289,17 +311,6 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	
 	f.line('using namespace {0};'.format(pkg))
 	
-	#write constructor
-	constructor_init=''
-	for field in msg_spec.parsed_fields():
-		if field.is_array:
-			if field.array_len:
-				constructor_init += '%s(%d),' %(field.name, field.array_len)
-	if (len(constructor_init) > 3):
-		f.line('{0}::{0}()'.format(msg_name))
-		f.line( ':' + constructor_init[:-1])
-		f.line('{}')
-	
 	writeFunct('ros::MsgSz', msg_name, 'serialize', 'uint8_t *in_data', lambda f: gen_serialize(f, msg_spec, 'in_data'))
 	writeFunct('ros::MsgSz', msg_name, 'deserialize', 'uint8_t *out_data', lambda f: gen_deserialize(f,msg_spec, 'out_data'))
 	writeFunct('ros::MsgSz', msg_name, 'bytes', '', lambda f: gen_bytes(f, msg_spec))
@@ -319,8 +330,7 @@ class CGenerator():
 		self.config = None
 		
 	def parseConfig(self, configFile):
-		"""
-			Takes a file like object of the yaml configuration 
+		""" Takes a file like object of the yaml configuration 
 		"""
 		
 		self.config = yaml.load(configFile)
@@ -331,7 +341,7 @@ class CGenerator():
 				#import that msg's python module
 				msg_type = self.config['service'][topic]['type']
 
-			#TODO IMPLEMENT SERVICES
+				#TODO IMPLEMENT SERVICES
 
 				self.topic_ids[topic] = len(self.topic_ids)
 											
@@ -341,9 +351,7 @@ class CGenerator():
 			for topic in self.config['subscribe']:
 				#import that msg's python module
 				msg_type = self.config['subscribe'][topic]['type']
-								
 				self.addMsg(topic, msg_type)
-				
 				self.topic_ids[topic] = len(self.topic_ids)
 
 		
@@ -351,9 +359,7 @@ class CGenerator():
 			for topic in self.config['publish']:
 				#import that msg's python module
 				msg_type = self.config['publish'][topic]['type']
-	
 				self.addMsg(topic, msg_type)
-				
 				self.topic_ids[topic] = len(self.topic_ids)
 		
 	def addMsg(self, pkg, name):
