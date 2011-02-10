@@ -441,13 +441,13 @@ class CGenerator():
 		"""
 		genPath = roslib.packages.find_resource(
 				'avr_bridge' ,'gen_avr.py')[0]
-		avrRosPath =  genPath[:-len('gen_avr.py')]+ 'avrRos'
-		inst_path = folder_path + '/avrRos'
+		avrRosPath =  genPath[:-len('gen_avr.py')]+ 'avr_ros'
+		inst_path = folder_path + '/avr_ros'
 
 		try:
 			shutil.copytree(avrRosPath, inst_path)
 		except Exception as e:
-			print "avrRos already exists in ", inst_path
+			print "avr_ros already exists in ", inst_path
 			print "The new files are overwriting the old files"
 			shutil.rmtree(inst_path)
 			shutil.copytree(avrRosPath, inst_path)
