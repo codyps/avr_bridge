@@ -314,8 +314,7 @@ class CGenerator():
 						#each type will generate a .h and .cpp file
 		self.msg_specs = {} #dict containing the msg spec for each type
 		
-		self.topicIds = {}
-		self._topicIds = 0
+		self.topic_ids = {}
 		
 		self.config = None
 		
@@ -334,8 +333,7 @@ class CGenerator():
 
 			#TODO IMPLEMENT SERVICES
 
-				self.topicIds[topic] = self._topicIds
-				self._topicIds +=1
+				self.topic_ids[topic] = len(self.topic_ids)
 											
 		
 		#subscribes must get their topic id first
@@ -346,8 +344,7 @@ class CGenerator():
 								
 				self.addMsg(topic, msg_type)
 				
-				self.topicIds[topic] = self._topicIds
-				self._topicIds +=1
+				self.topic_ids[topic] = len(self.topic_ids)
 
 		
 		if self.config.has_key('publish'):
@@ -357,8 +354,7 @@ class CGenerator():
 	
 				self.addMsg(topic, msg_type)
 				
-				self.topicIds[topic] = self._topicIds
-				self._topicIds +=1
+				self.topic_ids[topic] = len(self.topic_ids)
 		
 	def addMsg(self, pkg, name):
 		"""
@@ -388,11 +384,11 @@ class CGenerator():
 
 
 	def gen_internals(self, path):
-		f1 = SimpleStateC(open(path + '/ros_get_topic_tag.h'))
+		f1 = SimpleStateC(open(path + '/ros_get_topic_tag.h', 'w'))
 		self.gen_get_topic_tag(f1)
 		f1.close()
 
-		f2 = SimpleStateC(open(path + '/ros_node_instance.h'))
+		f2 = SimpleStateC(open(path + '/ros_node_instance.h', 'w'))
 		self.gen_node_instance(f2)
 		f2.close()
 
@@ -404,12 +400,12 @@ class CGenerator():
 		f.line(' * Rutgers University.')
 		f.line(' */')
 
-		msg_ct = len(self.topicIds)
+		msg_ct = len(self.topic_ids)
 
 		f.line('char getTopicTag(char *topic) {{'.format(msg_ct))
 		f.indent()
 
-		for topic_name, topic_id in self.topicIds.iteritems():
+		for topic_name, topic_id in self.topic_ids.iteritems():
 			f.line('if (!strcmp(topic, "{0}"))'.format(topic_name))
 			f.indent()
 			f.line('return {0};'.format(topic_id))
@@ -421,7 +417,8 @@ class CGenerator():
 		f.line('} /* getTopicTag */')
 
 		
-	def get_node_instance(self, f):
+	def gen_node_instance(self, f):
+		msg_ct = len(self.topic_ids)
 		f.line('NodeHandle<{1}, 256> node("{0}");'.format(self.config['name'], msg_ct))
 
 	def generateMsgFile(self, folderPath, msg):
