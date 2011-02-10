@@ -40,6 +40,8 @@
 
 #include <stdint.h>
 
+namespace ros {
+
 class Msg {
 public:
 	virtual uint16_t serialize(uint8_t *outbuffer) = 0;
@@ -47,6 +49,6 @@ public:
 	virtual uint16_t bytes() = 0;
 };
 
-
+}
 
 #endif /* MSG_H_ */
