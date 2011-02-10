@@ -387,13 +387,17 @@ class CGenerator():
 
 
 	def gen_internals(self, path):
-		f1 = SimpleStateC(open(path + '/ros_get_topic_tag.h', 'w'))
-		self.gen_get_topic_tag(f1)
-		f1.close()
+		f = SimpleStateC(open(path + '/ros_get_topic_tag.h', 'w'))
+		self.gen_get_topic_tag(f)
+		f.close()
 
-		f2 = SimpleStateC(open(path + '/ros_node_instance.h', 'w'))
-		self.gen_node_instance(f2)
-		f2.close()
+		f = SimpleStateC(open(path + '/ros_node_instance.h', 'w'))
+		self.gen_node_decl(f)
+		f.close()
+
+		f = SimpleStateC(open(path + '/ros_node_instance.cpp', 'w'))
+		self.gen_node_instance(f)
+		f.close()
 
 	def gen_get_topic_tag(self, f):
 		""" generate a header containing the getTopicTag function. """
@@ -419,9 +423,18 @@ class CGenerator():
 		f.dedent()
 		f.line('} /* getTopicTag */')
 
+	def gen_node_decl(self, f):
+		msg_ct = len(self.topic_ids)
+		f.macro_line('ifndef AVR_ROS_NODE_DECL_H_')
+		f.macro_line('define AVR_ROS_NODE_DECL_H_')
+		f.macro_line('include <avr_ros/node_handle.h>')
+		f.line('extern ros::NodeHandle<{0}, 256> node;'.format(msg_ct))
+		f.macro_line('endif')
+
 		
 	def gen_node_instance(self, f):
 		msg_ct = len(self.topic_ids)
+		f.macro_line('include <avr_ros/node_handle.h>')
 		f.line('ros::NodeHandle<{1}, 256> node("{0}");'.format(self.config['name'], msg_ct))
 
 	def generateMsgFile(self, folderPath, msg):
