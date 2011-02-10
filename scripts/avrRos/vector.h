@@ -42,7 +42,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-namespace ROS{
+namespace ros{
 
 template<class T> class vector{
 public:
