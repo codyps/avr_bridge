@@ -39,26 +39,28 @@
 #ifndef ROS_STRING_H_
 #define ROS_STRING_H_
 #include <stdint.h>
+#include <Ros.h>
 
 //this is only meant for rosdatatypes
 
-namespace ROS{
-class string{
+namespace ros {
+
+class string {
 public:
-	string(uint16_t maxLength);
+	string(MsgSz maxLength);
 	string(char const *str);
 	string();
 	void setString(char const *str);
-	uint16_t bytes();
-	uint16_t serialize(uint8_t* buffer);
-	uint16_t deserialize(uint8_t* buffer);
+	MsgSz bytes();
+	MsgSz serialize(uint8_t* buffer);
+	MsgSz deserialize(uint8_t* buffer);
 	char operator[](int i){ return data[i];};
-	void setMaxLength( uint16_t maxLength);
+	void setMaxLength(MsgSz maxLength);
 	char* getRawString(){return data;};
 
 private:
-	char* data;
-	uint16_t maxlength;
+	char *data;
+	MsgSz maxlength;
 };
 
 }
