@@ -57,7 +57,7 @@ import StringIO
 
 from c_writer import SimpleStateC
 
-primatives = {
+primitives = {
 	'bool'  :   ('bool',     1),
 	'byte'  :   ('uint8_t',  1),
 	'int8'  :   ('uint8_t',  1),
@@ -71,7 +71,7 @@ primatives = {
 	'float64':  ('double',   8),
 	'time':     ('int64_t',  8),
 	'duration': ('int64_t',  8),
-	'string' :  ('ROS::string', 0)
+	'string' :  ('ros::string', 0)
 }
 
 def extract_ros_type(field):
@@ -112,11 +112,11 @@ def make_union_cast(cf, field_name, otype, olen):
 
 	return uname
 
-def serialize_primative(f, buffer_addr, field):
+def serialize_primitive(f, buffer_addr, field):
 	"""Generate c code to serialize rostype of fieldname at the buffer 
 	"""
 	fpkg, ftype = extract_ros_type(field)
-	ctype, clen = primatives[ftype]
+	ctype, clen = primitives[ftype]
 	fname = field.name
 	
 	if (field.is_array or field.type == 'string'):
@@ -133,13 +133,13 @@ def serialize_primative(f, buffer_addr, field):
 					this, byte, mask))
 		f.line('offset += sizeof(this->{0});'.format(fname)) 
 
-def deserialize_primative(f, buffer_addr, field):
+def deserialize_primitive(f, buffer_addr, field):
 	"""
 	Generate c code to deserialize a rosmsg field of type ctype from 
 	specified buffer.
 	"""
 	fpkg, ftype = extract_ros_type(field)
-	ctype, clen = primatives[ftype]
+	ctype, clen = primitives[ftype]
 	fname = field.name
 
 	if (field.is_array or field.type == 'string'):
@@ -194,9 +194,9 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.line('public:')
 	f.indent()
 
-	f.line('uint16_t bytes();')
-	f.line('uint16_t serialize(uint8_t *out_buffer);')
-	f.line('uint16_t deserialize(uint8_t *data);')
+	f.line('MsgSz bytes();')
+	f.line('MsgSz serialize(uint8_t *out_buffer);')
+	f.line('MsgSz deserialize(uint8_t *data);')
 	
 	#write msg fields
 	for field in msg_spec.parsed_fields():
@@ -206,12 +206,12 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 		if ftype == 'Header':
 			ftype = "roslib::"+ftype
 		if field.is_builtin:
-			ftype, clen = primatives[ftype]
+			ftype, clen = primitives[ftype]
 		if field.is_array:
 			if field.array_len:
-				f.line('ROS::vector<{0}> {1}; // fixed at length {2}'.format(ftype, field.name, field.array_len))
+				f.line('ros::vector<{0}> {1}; // fixed at length {2}'.format(ftype, field.name, field.array_len))
 			else:
-				f.line('ROS::vector<{0}> {1};'.format(ftype, field.name))
+				f.line('ros::vector<{0}> {1};'.format(ftype, field.name))
 		else:
 			f.line('{0} {1};'.format(ftype, field.name))
 	
@@ -225,22 +225,24 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.macro_line('endif /* {0} */'.format(guard))
 
 def serialize_msg(f, msg_spec):
-	f.line('uint8_t offset = 0;')
+	f.line('MsgSz offset = 0;')
 	
 	for field in msg_spec.parsed_fields():
 		if (field.is_builtin):
-			serialize_primative(f, 'data', field)
+			serialize_primitive(f, 'data', field)
+		elif (field.is_array and field.array_len):
+			serialize_farray(f, 'data', field)
 		else:
 			f.line('offset += this->{0}.serialize({1} + offset);'.format(field.name, 'data'))
 			
 	f.line('return offset;')
 
 def deserialize_msg(f, msg_spec):
-	f.line('uint8_t offset = 0;')
+	f.line('MsgSz offset = 0;')
 	
 	for field in msg_spec.parsed_fields():
 		if (field.is_builtin):
-			deserialize_primative(f, 'data', field)
+			deserialize_primitive(f, 'data', field)
 		else:
 			f.line('offset += this->{0}.deserialize({1} + offset);'.format(field.name, 'data'))
 			
@@ -248,21 +250,21 @@ def deserialize_msg(f, msg_spec):
 
 
 
-def msg_size(f, msg_spec):
+def w_msg_fn_bytes(f, msg_spec):
 	"""
 	write out the bytes() member function for a msg.  
 	iterate through the msg fields and extracts either their size if 
-	they are a primative type, or call the bytes() of that msg.
+	they are a primitive type, or call the bytes() of that msg.
 
 	@param f :  output file object
 	@param msg_spec : the msg_spec of the msg
 	"""
-	f.line('uint8_t msgSize = 0;')
+	f.line('MsgSz msgSize = 0;')
 	
 	for field in msg_spec.parsed_fields():
 		if (field.is_builtin and not (field.type == 'string') ):
 			fpkg, ftype = extract_ros_type(field)
-			ctype, clen = primatives[ftype]
+			ctype, clen = primitives[ftype]
 			f.line('msgSize += sizeof({0});'.format(ctype))
 		else:
 			f.line('msgSize += {0}.bytes();'.format(field.name))
@@ -280,6 +282,7 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	"""
 
 	f.macro_line('include "{0}.h"'.format(msg_name))
+	f.macro_line('include <ros.h>')
 	f.macro_line('include <stdio.h>')
 	
 	f.line('using namespace {0};'.format(pkg))
@@ -307,9 +310,9 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 		f.line( ':' + constructor_init[:-1])
 		f.line('{}')
 	
-	writeFunct('uint16_t', msg_name, 'serialize', 'uint8_t *data', lambda f: serialize_msg(f, msg_spec))
-	writeFunct('uint16_t', msg_name, 'deserialize', 'uint8_t *data', lambda f: deserialize_msg(f,msg_spec))
-	writeFunct('uint16_t', msg_name, 'bytes', '', lambda f: msg_size(f, msg_spec))
+	writeFunct('MsgSz', msg_name, 'serialize', 'uint8_t *data', lambda f: serialize_msg(f, msg_spec))
+	writeFunct('MsgSz', msg_name, 'deserialize', 'uint8_t *data', lambda f: deserialize_msg(f,msg_spec))
+	writeFunct('MsgSz', msg_name, 'bytes', '', lambda f: w_msg_fn_bytes(f, msg_spec))
 
 class CGenerator():
 	"""
@@ -386,7 +389,7 @@ class CGenerator():
 
 				if msgType == 'Header':
 					self.addMsg('roslib', 'Header')
-				elif primatives.has_key(msgType) or msgType== 'string':
+				elif primitives.has_key(msgType) or msgType== 'string':
 					pass
 				else:
 					print "The msg type is ", msgType
@@ -409,7 +412,7 @@ class CGenerator():
 		f.line(' * Rutgers University.')
 		f.line(' */')
 
-		f.macro_line('include "Ros.h"')
+		f.macro_line('include <ros.h>')
 
 		msg_ct = len(self.topicIds)
 
