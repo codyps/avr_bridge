@@ -194,9 +194,9 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.line('public:')
 	f.indent()
 
-	f.line('MsgSz bytes();')
-	f.line('MsgSz serialize(uint8_t *out_buffer);')
-	f.line('MsgSz deserialize(uint8_t *data);')
+	f.line('ros::MsgSz bytes();')
+	f.line('ros::MsgSz serialize(uint8_t *out_buffer);')
+	f.line('ros::MsgSz deserialize(uint8_t *data);')
 	
 	#write msg fields
 	for field in msg_spec.parsed_fields():
@@ -234,7 +234,7 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	@param msg_spec : msg_spec object of the msg
 	"""
 	def gen_serialize(f, msg_spec):
-		f.line('MsgSz offset = 0;')
+		f.line('ros::MsgSz offset = 0;')
 		for field in msg_spec.parsed_fields():
 			if (field.is_builtin):
 				serialize_primitive(f, 'data', field)
@@ -243,7 +243,7 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 		f.line('return offset;')
 
 	def gen_deserialize(f, msg_spec):
-		f.line('MsgSz offset = 0;')
+		f.line('ros::MsgSz offset = 0;')
 		for field in msg_spec.parsed_fields():
 			if (field.is_builtin):
 				deserialize_primitive(f, 'data', field)
@@ -260,7 +260,7 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 		@param f :  output file object
 		@param msg_spec : the msg_spec of the msg
 		"""
-		f.line('MsgSz msgSize = 0;')
+		f.line('ros::MsgSz msgSize = 0;')
 		
 		for field in msg_spec.parsed_fields():
 			if (field.is_builtin and not (field.type == 'string') ):
@@ -300,9 +300,9 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 		f.line( ':' + constructor_init[:-1])
 		f.line('{}')
 	
-	writeFunct('MsgSz', msg_name, 'serialize', 'uint8_t *in_data', lambda f: gen_serialize(f, msg_spec))
-	writeFunct('MsgSz', msg_name, 'deserialize', 'uint8_t *out_data', lambda f: gen_deserialize(f,msg_spec))
-	writeFunct('MsgSz', msg_name, 'bytes', '', lambda f: gen_bytes(f, msg_spec))
+	writeFunct('ros::MsgSz', msg_name, 'serialize', 'uint8_t *in_data', lambda f: gen_serialize(f, msg_spec))
+	writeFunct('ros::MsgSz', msg_name, 'deserialize', 'uint8_t *out_data', lambda f: gen_deserialize(f,msg_spec))
+	writeFunct('ros::MsgSz', msg_name, 'bytes', '', lambda f: gen_bytes(f, msg_spec))
 
 class CGenerator():
 	"""
