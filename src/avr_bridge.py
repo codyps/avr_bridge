@@ -153,7 +153,7 @@ class AvrBridge():
 		self.slock = threading.Semaphore()
 		
 		#packet structures
-		self.header_struct = struct.Struct('<B<B<h') # packet_type topic_tag data_length
+		self.header_struct = struct.Struct('<BBh') # packet_type topic_tag data_length
 
 		
 	def registerTopic(self, topic, msgConstructor, recv_cb = None):
