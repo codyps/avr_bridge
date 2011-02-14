@@ -40,7 +40,7 @@ void pwm_init(pin_t);
 void pwm_set(pin_t, uint8_t);
 
 FILE *serial_init(void);
-int serial_getc(void);
+int serial_getchar_nonblock(FILE *fp);
 int serial_getchar(FILE *);
 int serial_putchar(char c, FILE *);
 

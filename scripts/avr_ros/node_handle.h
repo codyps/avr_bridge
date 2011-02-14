@@ -57,17 +57,8 @@ namespace ros {
 
 typedef void (RosCb)(Msg const *msg);
 
-/* XXX: there are 3 ways to go about giving class Ros the ability to send
- * data over the wire:
- *  1) use hard coded function names which (for some inexplicable
- *     reason, use the stdio style even though it is uneeded)
- *  2) pass a (FILE *) to the Ros constructor.
- *  3) pass a class implimenting a send_packet method of some sort.
- *
- * Lets try to get #3 in here
- */
-int fputc(char c, FILE *stream);
-static FILE *ros_io = fdevopen(fputc, NULL);
+/* this is defined by the user so that we may send bytes. */
+extern FILE *byte_io;
 
 enum PktType {
 	PT_TOPIC = 0,
@@ -155,18 +146,9 @@ class NodeHandle {
 public:
 	NodeHandle(char const *node_name)
 		: name(node_name)
-	{
-		this->io = ros_io;
-	}
-
-	NodeHandle(char const *node_name, FILE *_io)
-		: io(_io)
-		, name(node_name)
 	{}
 
-	//Get the publisher for a topic
-	//You cannot advertise a topic that was not in the configuration
-	//file
+	/* retrieve the unique ID of the publisher */
 	Publisher advertise(char const *topic)
 	{
 		return getTopicTag(topic);
@@ -193,8 +175,6 @@ public:
 	}
 
 private:
-	FILE *io;
-
 	string name;
 
 	RosCb *cb_list[MSG_CT];
@@ -235,9 +215,9 @@ private:
 			data_len
 		};
 
-		fwrite(&head, sizeof(head), 1, this->io);
+		fwrite(&head, sizeof(head), 1, byte_io);
 
-		fwrite(data, data_len, 1, this->io);
+		fwrite(data, data_len, 1, byte_io);
 	}
 
 	/* given the character string of a topic, determines the numeric tag to

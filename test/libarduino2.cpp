@@ -75,7 +75,6 @@ void analog_init(void) {
     BIT_HI(ADCSRA, ADIE);  /* interrupt on completion */
     BIT_HI(ADCSRA, ADEN);  /* enable */
     ADCSRA |= ADC_PRESCALE_BITS; /* clock divisor */
-    sei();
 
     BIT_HI(ADCSRA, ADSC);        /* begin conversion */
     _delay_loop_2(ADC_PRESCALE); /* wait for ADMUX to be read */
@@ -202,7 +201,6 @@ FILE *serial_init(void) {
     BIT_HI(UCSR0B, TXEN0);  /* enable send */
     BIT_HI(UCSR0B, RXEN0);  /* enable receive */
     BIT_HI(UCSR0B, RXCIE0); /* enable receive interrupt */
-    sei();                  /* enable global interrupts */
 
     /* g_uart is initialized via FDEV_SETUP_STREAM initializer above */
     fdev_setup_stream(&g_uart, serial_putchar, serial_getchar, _FDEV_SETUP_RW);
@@ -218,7 +216,7 @@ inline static void barrier(void)
     asm volatile("":::"memory");
 }
 
-int serial_getc(void) {
+int serial_getchar_nonblock(FILE *fp) {
     char ch;
 
     /* Only read from the buffer if new data is available. */
@@ -300,7 +298,6 @@ void timer_init(void) {
     TCCR0B = 0;
     TIMSK0 |= (1 << TOIE0); /* enable interrupt on overflow */
     TCCR0B |= (1 << CS00) | (1 << CS01); /* 64 prescale factor */
-    sei();                 /* enable global interrupts */
 }
 
 void timer_start(uint16_t ms) {

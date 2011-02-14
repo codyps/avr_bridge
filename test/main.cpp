@@ -5,9 +5,8 @@
 #include "libarduino2.h"
 
 namespace ros {
-	int fputc(char c, FILE *f) {
-		return serial_putchar(c, f);
-	}
+	FILE _byte_io;
+	FILE *byte_io = &_byte_io;
 }
 
 ros::Publisher resp;
@@ -40,7 +39,10 @@ void response(ros::Msg const *msg)
 
 
 __attribute__((OS_main))
-int main(void) {
+int main(void)
+{
+	fdev_setup_stream(&ros::_byte_io, serial_putchar,
+			serial_getchar_nonblock, _FDEV_SETUP_RW);
 	serial_init();
 
 	digital_init(13, PIN_OUTPUT);
