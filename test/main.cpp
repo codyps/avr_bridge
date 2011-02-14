@@ -45,6 +45,8 @@ int main(void)
 			serial_getchar_nonblock, _FDEV_SETUP_RW);
 	serial_init();
 
+	sei();
+
 	digital_init(13, PIN_OUTPUT);
 	resp = node.advertise("response");
 	node.subscribe("call",response, &call_msg);
