@@ -54,12 +54,7 @@ int main(void)
 
 
 	for(;;) {
-		for(;;) {
-			int c = serial_getc();
-			if (c == EOF)
-				break;
-			node.spin(c);
-		}
+		node.spin();
 
 		/* Do other work */
 	}

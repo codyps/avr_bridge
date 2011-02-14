@@ -174,6 +174,14 @@ public:
 		}
 	}
 
+	void spin(void)
+	{
+		int c;
+		while ((c = getc(byte_io)) != EOF) {
+			this->spin(c);
+		}
+	}
+
 private:
 	string name;
 
