@@ -191,7 +191,7 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.macro_line('ifndef {0}'.format(guard))
 	f.macro_line('define {0}'.format(guard))
 
-	f.macro_line('include "avr_ros/Msg.h"')
+	f.macro_line('include "avr_ros/msg.h"')
 	f.macro_line('include "avr_ros/vector.h"')
 	f.macro_line('include "avr_ros/ros_string.h"')
 
