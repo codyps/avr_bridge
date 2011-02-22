@@ -54,10 +54,8 @@ int main(void)
 	call_msg.data.setMaxLength(30);
 	response_msg.data.setMaxLength(60);
 
-
 	for(;;) {
 		node.spin();
-
 		/* Do other work */
 	}
 }

@@ -156,8 +156,10 @@ public:
 
 	void publish(Publisher pub, Msg *msg)
 	{
-		MsgSz bytes = msg->serialize(this->outBuffer);
-		this->send_pkt(PT_TOPIC, pub, outBuffer, bytes);
+		this->pkt_start(PT_TOPIC, pub, msg.bytes());
+		MsgSz bytes = msg->serialize(this->out_buffer);
+		fwrite(this->out_buffer, bytes, 1, byte_io);
+		this->pkt_end();
 	}
 
 	void subscribe(char const *topic, RosCb *funct, Msg *msg)
@@ -165,6 +167,33 @@ public:
 		uint8_t tag = getTopicTag(topic);
 		this->cb_list[tag] = funct;
 		this->msg_list[tag] = msg;
+	}
+
+	void pkt_start(enum PktType pkt_type, uint8_t topic,
+			MsgSz data_len)
+	{
+		PktHeader head = {
+			pkt_type,
+			topic,
+			data_len
+		};
+
+		fwrite(&head, sizeof(head), 1, byte_io);
+	}
+
+	void pkt_end(void)
+	{
+		/* nop */
+	}
+
+	void pkt_send_byte(uint8_t c)
+	{
+		putc(c, byte_io);
+	}
+
+	uint8_t pkt_recv_byte(void)
+	{
+		return getc(byte_io);
 	}
 
 	void spin(char c)
@@ -187,12 +216,12 @@ private:
 
 	RosCb *cb_list[MSG_CT];
 	Msg *msg_list[MSG_CT];
-	uint8_t outBuffer[BUFFER_SZ];
+	uint8_t out_buffer[BUFFER_SZ];
 
 	void send_id()
 	{
-		MsgSz size = this->name.serialize(this->outBuffer);
-		this->send_pkt(PT_GETID, 0, outBuffer, size);
+		MsgSz size = this->name.serialize(this->out_buffer);
+		this->send_pkt(PT_GETID, 0, this->out_buffer, size);
 	}
 
 	void process_pkt()
@@ -217,14 +246,7 @@ private:
 	void send_pkt(enum PktType pkt_type, uint8_t topic,
 			uint8_t const *data, MsgSz data_len)
 	{
-		PktHeader head = {
-			pkt_type,
-			topic,
-			data_len
-		};
-
-		fwrite(&head, sizeof(head), 1, byte_io);
-
+		pkt_start(pkt_type, topic, data_len);
 		fwrite(data, data_len, 1, byte_io);
 	}
 
