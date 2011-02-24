@@ -51,6 +51,9 @@ void frame_recv_feed(frame_recv_ctx *fc, uint8_t c)
 {
 	uint8_t head = fc->head;
 	uint8_t phead = fc->data[head];
+	
+	/* FIXME: is this +1 needed? */
+	uint8_t next_pos = (head + phead + 1) & (sizeof(fc->data) - 1);
 
 	if (c == FRAME_START) {
 		fc->started = true;
@@ -58,8 +61,10 @@ void frame_recv_feed(frame_recv_ctx *fc, uint8_t c)
 
 		if (phead != 0) {
 			/* current packet has data */
-			uint8_t next_pos = (head + phead + 1) & (sizeof(fc->data) - 1);
+
 			if (fc->crc != 0 || next_pos == fc->tail) {
+				/* Invalid CRC or no space. Avoid packet
+				 * advance */
 				phead = 0;
 				fc->data[head] = phead;
 			} else {
@@ -67,22 +72,56 @@ void frame_recv_feed(frame_recv_ctx *fc, uint8_t c)
 				phead -= FRAME_CRC_SZ;
 				fc->data[head] = phead;
 
+				/* FIXME: should this be next_pos - 1? */
 				fc->head = next_pos;
+				
+				/* packet has 0 len initially */
+				fc->data[fc->head] = 0; 
 			}
 
 		}
 
 		fc->crc = FRAME_CRC_INIT;
-
-
+		return;
 	}
 
 
-	if (fc->started) {
-
-	} else {
-
+	if (!fc->started) {
+		return;
 	}
+
+	if (c == FRAME_RESET) {
+		goto drop_packet;
+	}
+
+	if (c == FRAME_ESC) {
+		fc->esc = true;
+		return;
+	}
+
+	if (fc->esc) {
+		fc->esc = false;
+		c ^= FRAME_ESC_MASK;
+	}
+
+	fc->crc = _crc_ccitt_update(fc->crc, c);
+
+	if (next_pos != fc->tail) {
+		/* there is more space */
+		uint8_t pos = (head + phead) & (sizeof(fc->data) - 1);
+		fc->data[pos] = c;
+		phead += 1;
+		fc->data[head] = phead;
+	}
+
+	/* no more space */
+
+drop_packet:
+	fc->started = false;
+	fc->esc = false;
+	fc->crc = FRAME_CRC_INIT;
+
+	fc->data[head] = 0;
 }
 
 void frame_recv_error(frame_recv_ctx *fc)
