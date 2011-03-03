@@ -12,7 +12,7 @@ from the National Institute of Environmental Health Sciences.
 Software License Agreement (BSD License)
 
 Copyright (c) 2011, Adam Stambler
-Copyright (c) 2011, Cody Schafer
+Copyright (c) 2011, Cody Schafer <cpschafer@gmail.com>
 
 All rights reserved.
 
