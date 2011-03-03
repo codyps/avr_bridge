@@ -71,35 +71,39 @@ void string::setString(char const *str){
 	l = (l > maxlength) ? maxlength : l;
 
 	strncpy(this->data,str,l);
-	this->data[l]=0;
-
+	this->data[l] = 0;
 }
 
-MsgSz string::serialize(uint8_t * buffer){
+void string::serialize(PacketOut *p){
 	MsgSz length = strlen(data);
-	memcpy(buffer, &length, 4);
-	memcpy(buffer+4, data, length);
-	return length+4;
+	for(uint8_t i = 0; i < sizeof(length); i++) {
+		p->pkt_send_byte((length >> i) & 0xff);
+	}
+
+	for(MsgSz i = 0; i < length; i++) {
+		p->pkt_send_byte(data[i]);
+	}
 }
 
 MsgSz string::deserialize(uint8_t* buffer){
 	MsgSz length;
-	memcpy(&length, buffer,4);
+	memcpy(&length, buffer, sizeof(length));
+	buffer += sizeof(length);
 	//deal with the overflow quietly, just take as much as possible
 	if (length > maxlength){
-		memcpy(data, buffer+4, maxlength);
-		data[maxlength] =0;
+		memcpy(data, buffer, maxlength);
+		data[maxlength] = 0;
 	}
 	else{
-		memcpy(data, buffer+4, length);
-		data[length] =0;
+		memcpy(data, buffer, length);
+		data[length] = 0;
 	}
 
-	return length+4;
+	return length + sizeof(length);
 }
 
 MsgSz string::bytes(){
 	MsgSz length = strlen(data);
-	return length+4;
+	return length + sizeof(length);
 }
 

@@ -12,6 +12,8 @@ from the National Institute of Environmental Health Sciences.
 Software License Agreement (BSD License)
 
 Copyright (c) 2011, Adam Stambler
+Copyright (c) 2011, Cody Schafer
+
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -113,7 +115,7 @@ def make_union_cast(cf, field_name, otype, olen):
 
 	return uname
 
-def serialize_primitive(f, buffer_addr, field):
+def serialize_primitive(f, node, field):
 	"""Generate c code to serialize rostype of fieldname at the buffer 
 	"""
 	fpkg, ftype = extract_ros_type(field)
@@ -124,11 +126,9 @@ def serialize_primitive(f, buffer_addr, field):
 	f.line('{0}.real = this->{1};'.format(this, fname))
 	for byte in range(0, clen):
 		mask = '0xFF'
-		f.line('*({0} + offset + {1}) = '.format(buffer_addr,
-							byte)
-		     + '({0}.base >> (8 * {1})) & {2};'.format(
-				this, byte, mask))
-	f.line('offset += sizeof(this->{0});'.format(fname)) 
+		f.line('{0}->pkt_send_byte(('.format(node) +
+			'{0}.base >> (8 * {1})) & {2});'.format(
+			this, byte, mask))
 
 
 def serialize_array(f, buf_n, field):
@@ -194,6 +194,7 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.macro_line('include "avr_ros/msg.h"')
 	f.macro_line('include "avr_ros/vector.h"')
 	f.macro_line('include "avr_ros/ros_string.h"')
+	f.macro_line('include "avr_ros/node_handle.h"')
 
 	#write includes
 	for field in msg_spec.parsed_fields():
@@ -211,7 +212,7 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.indent()
 
 	f.line('ros::MsgSz bytes();')
-	f.line('ros::MsgSz serialize(uint8_t *out_buffer);')
+	f.line('void serialize(ros::PacketOut *n);')
 	f.line('ros::MsgSz deserialize(uint8_t *data);')
 	
 	#write msg fields
@@ -251,16 +252,14 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	@param pkg : pkg that the message is found in
 	@param msg_spec : msg_spec object of the msg
 	"""
-	def gen_serialize(f, msg_spec, array_n):
-		f.line('ros::MsgSz offset = 0;')
+	def gen_serialize(f, msg_spec, node):
 		for field in msg_spec.parsed_fields():
 			if (field.is_array and field.array_len):
-				serialize_array(f, array_n, field)
+				serialize_array(f, node, field)
 			elif (field_is_prim(field)):
-				serialize_primitive(f, array_n, field)
+				serialize_primitive(f, node, field)
 			else:
-				f.line('offset += this->{0}.serialize({1} + offset);'.format(field.name, array_n))
-		f.line('return offset;')
+				f.line('this->{0}.serialize({1});'.format(field.name, node))
 
 	def gen_deserialize(f, msg_spec, array_n):
 		f.line('ros::MsgSz offset = 0;')
@@ -308,7 +307,7 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 	f.macro_line('include "avr_ros/{0}.h"'.format(msg_name))
 	f.line('using namespace {0};'.format(pkg))
 	
-	writeFunct('ros::MsgSz', msg_name, 'serialize', 'uint8_t *in_data', lambda f: gen_serialize(f, msg_spec, 'in_data'))
+	writeFunct('void',       msg_name, 'serialize', 'ros::PacketOut *n', lambda f: gen_serialize(f, msg_spec, 'n'))
 	writeFunct('ros::MsgSz', msg_name, 'deserialize', 'uint8_t *out_data', lambda f: gen_deserialize(f,msg_spec, 'out_data'))
 	writeFunct('ros::MsgSz', msg_name, 'bytes', '', lambda f: gen_bytes(f, msg_spec))
 

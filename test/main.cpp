@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <avr/io.h>
+#include <avr/interrupt.h>
 #include "avr_ros/ros.h"
 #include "avr_ros/String.h"
 #include "libarduino2.h"

@@ -40,6 +40,7 @@
 #define ROS_STRING_H_
 #include <stdint.h>
 #include <avr_ros/ros_types.h>
+#include <avr_ros/packet_out.h>
 
 //this is only meant for rosdatatypes
 
@@ -52,7 +53,7 @@ public:
 	string();
 	void setString(char const *str);
 	MsgSz bytes();
-	MsgSz serialize(uint8_t* buffer);
+	void serialize(ros::PacketOut *p);
 	MsgSz deserialize(uint8_t* buffer);
 	char operator[](int i){ return data[i];};
 	void setMaxLength(MsgSz maxLength);

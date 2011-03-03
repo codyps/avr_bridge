@@ -45,6 +45,7 @@
 
 #include "avr_ros/ros_types.h"
 #include "avr_ros/ros_string.h"
+#include "avr_ros/packet_out.h"
 #include "avr_ros/msg.h"
 
 #define __deprecated __attribute__((deprecated))
@@ -60,17 +61,6 @@ typedef void (RosCb)(Msg const *msg);
 /* this is defined by the user so that we may send bytes. */
 extern FILE *byte_io;
 
-enum PktType {
-	PT_TOPIC = 0,
-	PT_SERVICE = 1,
-	PT_GETID = 0xff
-};
-
-struct PktHeader {
-	uint8_t packet_type;
-	uint8_t topic_tag;
-	uint16_t msg_length;
-};
 
 typedef uint8_t Publisher;
 
@@ -140,12 +130,12 @@ struct InputCtx {
 	uint8_t buffer_index;
 };
 
-
 template <size_t MSG_CT, size_t BUFFER_SZ>
 class NodeHandle {
 public:
 	NodeHandle(char const *node_name)
 		: name(node_name)
+		, pout(byte_io)
 	{}
 
 	/* retrieve the unique ID of the publisher */
@@ -156,10 +146,9 @@ public:
 
 	void publish(Publisher pub, Msg *msg)
 	{
-		this->pkt_start(PT_TOPIC, pub, msg->bytes());
-		MsgSz bytes = msg->serialize(this->out_buffer);
-		fwrite(this->out_buffer, bytes, 1, byte_io);
-		this->pkt_end();
+		this->pout.pkt_start(PT_TOPIC, pub, msg->bytes());
+		msg->serialize(&this->pout);
+		this->pout.pkt_end();
 	}
 
 	void subscribe(char const *topic, RosCb *funct, Msg *msg)
@@ -169,32 +158,6 @@ public:
 		this->msg_list[tag] = msg;
 	}
 
-	void pkt_start(enum PktType pkt_type, uint8_t topic,
-			MsgSz data_len)
-	{
-		PktHeader head = {
-			pkt_type,
-			topic,
-			data_len
-		};
-
-		fwrite(&head, sizeof(head), 1, byte_io);
-	}
-
-	void pkt_end(void)
-	{
-		/* nop */
-	}
-
-	void pkt_send_byte(uint8_t c)
-	{
-		putc(c, byte_io);
-	}
-
-	uint8_t pkt_recv_byte(void)
-	{
-		return getc(byte_io);
-	}
 
 	void spin(char c)
 	{
@@ -216,12 +179,13 @@ private:
 
 	RosCb *cb_list[MSG_CT];
 	Msg *msg_list[MSG_CT];
-	uint8_t out_buffer[BUFFER_SZ];
 
 	void send_id()
 	{
-		MsgSz size = this->name.serialize(this->out_buffer);
-		this->send_pkt(PT_GETID, 0, this->out_buffer, size);
+		MsgSz size = this->name.bytes();
+		this->pout.pkt_start(PT_GETID, 0, size);
+		this->name.serialize(&this->pout);
+		this->pout.pkt_end();
 	}
 
 	void process_pkt()
@@ -242,20 +206,13 @@ private:
 		}
 	}
 
-	/* XXX: use an enum for pkt_type and topic to prevent swapping? */
-	void send_pkt(enum PktType pkt_type, uint8_t topic,
-			uint8_t const *data, MsgSz data_len)
-	{
-		pkt_start(pkt_type, topic, data_len);
-		fwrite(data, data_len, 1, byte_io);
-	}
-
 	/* given the character string of a topic, determines the numeric tag to
 	 * place in a packet */
 	/* char getTopicTag(char const *topic); */
 #include "ros_get_topic_tag.h"
 
 	InputCtx <MSG_CT, BUFFER_SZ> in_ctx;
+	PacketOut pout;
 };
 
 } /* namespace ros */

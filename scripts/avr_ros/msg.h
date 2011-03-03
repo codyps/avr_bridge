@@ -40,12 +40,13 @@
 
 #include <stdint.h>
 #include <avr_ros/ros_types.h>
+#include <avr_ros/packet_out.h>
 
 namespace ros {
 
 class Msg {
 public:
-	virtual MsgSz serialize(uint8_t *outbuffer) = 0;
+	virtual void serialize(ros::PacketOut *n) = 0;
 	virtual MsgSz deserialize(uint8_t *data) = 0;
 	virtual MsgSz bytes() = 0;
 };
