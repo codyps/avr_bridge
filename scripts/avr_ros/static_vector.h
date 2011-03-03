@@ -38,89 +38,96 @@
 #ifndef ROS_SVECTOR_H_
 #define ROS_SVECTOR_H_
 #include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdint.h>
 
 namespace ros {
+	template<typename T> class static_vector {
+	public:
+		static_vector()
+		{}
 
-template<typename T> class static_vector {
-public:
-	static_vector()
-	{}
+		static_vector(uint8_t *ndata, MsgSz len)
+			: mem_size(len)
+			, data(ndata)
+		{}
 
-	static_vector(uint8_t *ndata, MsgSz len)
-		: mem_size(len)
-		, data(ndata)
-	{}
-
-	MsgSz size()
-	{
-		return length;
-	}
-
-	T& operator[](MsgSz i)
-	{
-		return data[i];
-	}
-
-	/* XXX:Broken: does not allow use of non-primitive messages.
-	 * possible to fix via template specialization for primitive types.
-	 */
-	void serialize(PacketOut *p)
-	{
-		for(uint8_t i = 0; i < sizeof(length); i++) {
-			p->pkt_send_byte((length >> i) & 0xff);
+		MsgSz size()
+		{
+			return length;
 		}
 
-		for(MsgSz i = 0; i < length; i++) {
-			p->pkt_send_byte(data[i]);
+		T& operator[](MsgSz i)
+		{
+			return data[i];
 		}
-	}
 
-	/* XXX:Broken: see serialize */
-	MsgSz deserialize(uint8_t * buffer)
-	{
-		memcpy(&length, buffer, sizeof(length));
-		buffer += sizeof(length);
-		memcpy(data, buffer, this->bytes());
-		return this->bytes();
-	}
+		/* XXX:Broken: does not allow use of non-primitive messages.
+		 * possible to fix via template specialization for primitive
+		 * types.
+		 */
+		void serialize(PacketOut *p)
+		{
+			uint8_t i;
+			for(i = 0; i < sizeof(length); i++) {
+				p->pkt_send_byte((length >> i) & 0xff);
+			}
 
-	/* size when serialized */
-	/* XXX:Broken: see serialize */
-	MsgSz bytes(void)
-	{
-		return length * sizeof(T) + sizeof(length);
-	}
+			/* pad out to 4 bytes. */
+			for(; i < sizeof(uint32_t); i++) {
+				p->pkt_send_byte(0);
+			}
 
-	void push_back(T item)
-	{
-		if (length > mem_size) {
-			return;
+			for(MsgSz i = 0; i < length; i++) {
+				p->pkt_send_byte(data[i]);
+			}
 		}
-		
-		data[length] = item;
-		length++;
-	}
 
-	/* FIXME: potentially unsafe operation */
-	T pop_back()
-	{
-		length--;
-		return data[length + 1];
-	}
+		/* XXX:Broken: see serialize */
+		MsgSz deserialize(uint8_t * buffer)
+		{
+			/* length is a 32bit le int */
+			uint32_t slen = this->length;
+			memcpy(&slen, buffer, sizeof(slen));
+			buffer += sizeof(slen);
+			memcpy(data, buffer, this->bytes());
+			return this->bytes();
+		}
 
-	void set_mem(void *ndata, MsgSz nlen)
-	{
-		data = ndata;
-		mem_size = nlen;
-	}
+		/* size when serialized */
+		/* XXX:Broken: see serialize */
+		MsgSz bytes(void)
+		{
+			return length * sizeof(T) + sizeof(uint32_t);
+		}
 
-private:
-	T* data;
-	MsgSz length;
-	MsgSz mem_size;
-};
+		void push_back(T item)
+		{
+			if (length > mem_size) {
+				return;
+			}
+			
+			data[length] = item;
+			length++;
+		}
+
+		/* FIXME: potentially unsafe operation */
+		T pop_back()
+		{
+			length--;
+			return data[length + 1];
+		}
+
+		void set_mem(void *ndata, MsgSz nlen)
+		{
+			data = ndata;
+			mem_size = nlen;
+		}
+
+	private:
+		T* data;
+		MsgSz length;
+		MsgSz mem_size;
+	};
 
 
 }
