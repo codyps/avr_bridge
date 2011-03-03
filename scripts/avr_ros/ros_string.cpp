@@ -4,6 +4,7 @@
  * Software License Agreement (BSD License)
  *
  * Copyright (c) 2011, Adam Stambler
+ * Copyright (c) 2011, Cody Schafer <cpschafer@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,40 +43,38 @@
 
 using namespace ros;
 
-string::string(){
-	maxlength = 0;
+void string::set_mem(void *ndata, MsgSz nlen)
+{
+	this->data = static_cast<char *>(ndata);
+	this->mem_len = nlen;
 }
 
-string::string(MsgSz maxLength){
-	maxLength=0;
-	this->setMaxLength(maxLength);
+string::string(char const *str)
+{
+	this->set_string(str);
 }
 
-void string::setMaxLength(MsgSz maxLength){
-	if (this->maxlength <=0){
-		data = (char*) malloc(maxLength+1);
-		this->maxlength = maxLength;
-		data[0]=0;
-	}
+string::string(char const *str, MsgSz len)
+{
+	this->set_nstring(str, len);
 }
 
-string::string(char const *str){
-	this->setString(str);
-}
-
-void string::setString(char const *str){
-	MsgSz l = strlen(str);
-
-	if (maxlength<=0) setMaxLength(l);
-
-	l = (l > maxlength) ? maxlength : l;
-
-	strncpy(this->data,str,l);
+void string::set_nstring(char const *str, MsgSz l)
+{
+	this->str_len = l = (l > mem_len) ? mem_len : l;
+	strncpy(this->data, str, l);
 	this->data[l] = 0;
 }
 
-void string::serialize(PacketOut *p){
-	MsgSz length = strlen(data);
+void string::set_string(char const *str)
+{
+	MsgSz l = strlen(str) + 1;
+	set_nstring(str, l);
+}
+
+void string::serialize(PacketOut *p)
+{
+	MsgSz length = this->str_len;
 	for(uint8_t i = 0; i < sizeof(length); i++) {
 		p->pkt_send_byte((length >> i) & 0xff);
 	}
@@ -85,25 +84,24 @@ void string::serialize(PacketOut *p){
 	}
 }
 
-MsgSz string::deserialize(uint8_t* buffer){
+MsgSz string::deserialize(uint8_t *buffer)
+{
 	MsgSz length;
 	memcpy(&length, buffer, sizeof(length));
 	buffer += sizeof(length);
-	//deal with the overflow quietly, just take as much as possible
-	if (length > maxlength){
-		memcpy(data, buffer, maxlength);
-		data[maxlength] = 0;
-	}
-	else{
-		memcpy(data, buffer, length);
-		data[length] = 0;
-	}
+	
+	/* deal with the overflow quietly, just take as much as possible */
+	length = (length > mem_len) ? mem_len : length;
+
+	memcpy(data, buffer, length);
+	data[length] = 0;
+	str_len = length;
 
 	return length + sizeof(length);
 }
 
-MsgSz string::bytes(){
-	MsgSz length = strlen(data);
-	return length + sizeof(length);
+MsgSz string::bytes()
+{
+	return str_len + sizeof(str_len);
 }
 

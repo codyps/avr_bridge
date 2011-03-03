@@ -15,7 +15,7 @@ ros::Publisher resp;
 std_msgs::String call_msg;
 std_msgs::String response_msg;
 
-void toggle(void)
+static void toggle(void)
 {
 	static char t = 0;
 	if (!t ) {
@@ -27,17 +27,21 @@ void toggle(void)
 	}
 }
 
-void response(ros::Msg const *msg)
+static void response(ros::Msg const *msg)
 {
 	toggle();
 
 	/* note that this is unsafe as the result could be larger than
 	 * the space avaliable in 'data' */
-	sprintf(response_msg.data.getRawString(),
-			"You sent : %s", call_msg.data.getRawString());
+	ros::MsgSz l = snprintf(response_msg.data.c_str(),
+			response_msg.data.size(),
+			"You sent : %s", call_msg.data.c_str());
+	response_msg.data.set_len(l);
 	node.publish(resp, &response_msg);
 }
 
+static uint8_t call_mem[30];
+static uint8_t response_mem[60];
 
 __attribute__((OS_main))
 int main(void)
@@ -52,8 +56,10 @@ int main(void)
 	resp = node.advertise("response");
 	node.subscribe("call",response, &call_msg);
 
-	call_msg.data.setMaxLength(30);
-	response_msg.data.setMaxLength(60);
+
+
+	call_msg.data.set_mem(call_mem, sizeof(call_mem));
+	response_msg.data.set_mem(response_mem, sizeof(response_mem));
 
 	for(;;) {
 		node.spin();
