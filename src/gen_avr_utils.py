@@ -192,7 +192,7 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 	f.macro_line('define {0}'.format(guard))
 
 	f.macro_line('include "avr_ros/msg.h"')
-	f.macro_line('include "avr_ros/vector.h"')
+	f.macro_line('include "avr_ros/static_vector.h"')
 	f.macro_line('include "avr_ros/string.h"')
 	f.macro_line('include "avr_ros/node_handle.h"')
 
@@ -228,7 +228,7 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 			if field.array_len:
 				f.line('{0} {1}[{2}];'.format(ftype, field.name, field.array_len))
 			else:
-				f.line('ros::vector<{0}> {1};'.format(ftype, field.name))
+				f.line('ros::static_vector<{0}> {1};'.format(ftype, field.name))
 		else:
 			f.line('{0} {1};'.format(ftype, field.name))
 	
