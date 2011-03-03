@@ -4,6 +4,8 @@
  * Software License Agreement (BSD License)
  *
  * Copyright (c) 2011, Adam Stambler
+ * Copyright (c) 2011, Cody Schafer <cpschafer@gmail.com>
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -119,7 +121,7 @@ namespace ros {
 
 		void set_mem(void *ndata, MsgSz nlen)
 		{
-			data = ndata;
+			data = static_cast<T *>(ndata);
 			mem_size = nlen;
 		}
 

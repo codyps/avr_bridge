@@ -75,8 +75,14 @@ void string::set_string(char const *str)
 void string::serialize(PacketOut *p)
 {
 	MsgSz length = this->str_len;
-	for(uint8_t i = 0; i < sizeof(length); i++) {
+	uint8_t i;
+	for(i = 0; i < sizeof(length); i++) {
 		p->pkt_send_byte((length >> i) & 0xff);
+	}
+
+	/* pad out to 4 bytes */
+	for(; i < sizeof(uint32_t); i++) {
+		p->pkt_send_bte(0);
 	}
 
 	for(MsgSz i = 0; i < length; i++) {
@@ -86,22 +92,21 @@ void string::serialize(PacketOut *p)
 
 MsgSz string::deserialize(uint8_t *buffer)
 {
-	MsgSz length;
+	uint32_t length;
 	memcpy(&length, buffer, sizeof(length));
 	buffer += sizeof(length);
 	
 	/* deal with the overflow quietly, just take as much as possible */
-	length = (length > mem_len) ? mem_len : length;
+	str_len = (length > mem_len) ? mem_len : length;
 
-	memcpy(data, buffer, length);
-	data[length] = 0;
-	str_len = length;
+	memcpy(data, buffer, str_len);
+	data[str_len] = 0;
 
-	return length + sizeof(length);
+	return str_len + sizeof(length);
 }
 
 MsgSz string::bytes()
 {
-	return str_len + sizeof(str_len);
+	return str_len + sizeof(uint32_t);
 }
 
