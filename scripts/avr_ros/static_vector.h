@@ -45,6 +45,9 @@ namespace ros {
 
 template<typename T> class static_vector {
 public:
+	static_vector()
+	{}
+
 	static_vector(uint8_t *ndata, MsgSz len)
 		: mem_size(len)
 		, data(ndata)

@@ -43,8 +43,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "avr_ros/ros_types.h"
-#include "avr_ros/ros_string.h"
+#include "avr_ros/types.h"
+#include "avr_ros/string.h"
 #include "avr_ros/packet_out.h"
 #include "avr_ros/msg.h"
 
