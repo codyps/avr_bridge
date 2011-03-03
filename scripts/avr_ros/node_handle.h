@@ -156,7 +156,7 @@ public:
 
 	void publish(Publisher pub, Msg *msg)
 	{
-		this->pkt_start(PT_TOPIC, pub, msg.bytes());
+		this->pkt_start(PT_TOPIC, pub, msg->bytes());
 		MsgSz bytes = msg->serialize(this->out_buffer);
 		fwrite(this->out_buffer, bytes, 1, byte_io);
 		this->pkt_end();
