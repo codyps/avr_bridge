@@ -38,7 +38,7 @@
 #ifndef ROS_STRING_H_
 #define ROS_STRING_H_
 #include <stdint.h>
-#include <avr_ros/ros_types.h>
+#include <avr_ros/types.h>
 #include <avr_ros/packet_out.h>
 
 //this is only meant for rosdatatypes

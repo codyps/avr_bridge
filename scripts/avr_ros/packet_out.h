@@ -2,7 +2,7 @@
 #define PACKET_OUT_H_
 
 #include <stdio.h>
-#include <avr_ros/ros_types.h>
+#include <avr_ros/types.h>
 
 namespace ros {
 	enum PktType {
