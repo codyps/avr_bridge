@@ -82,7 +82,7 @@ void string::serialize(PacketOut *p)
 
 	/* pad out to 4 bytes */
 	for(; i < sizeof(uint32_t); i++) {
-		p->pkt_send_bte(0);
+		p->pkt_send_byte(0);
 	}
 
 	for(MsgSz i = 0; i < length; i++) {
