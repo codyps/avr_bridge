@@ -6,7 +6,7 @@ ROS  topics.  This allows everything from Arduinos to custom robot
 boards to be first class ROS components.
 
   </description>
-  <author>Adam Stambler, Phillip Quiza</author>
+  <author>Adam Stambler, Phillip Quiza, Cody Schafer</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/avr_bridge</url>
@@ -14,7 +14,6 @@ boards to be first class ROS components.
   <depend package="std_msgs"/>
   
   <rosdep name="pyserial"/>
-  
 </package>
 
 
