@@ -1,0 +1,10 @@
+To use cmake with avr_bridge and the arduiono,
+copy the examke CMakeList.txt to your project directory along with the
+cmake_scripts directory.  Then:
+
+1.  Modify the project name
+2.  Choose which arduiono board you are using by including the correct
+    cmake script.  By default, the arduino diecimila is included.
+3.  Add your src files to the PROJECT_SRC variable.
+
+
