@@ -1,6 +1,10 @@
 #ifndef LIBARDUINO2_H_
 #define LIBARDUINO2_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -51,5 +55,9 @@ bool timer_done(void);
 uint32_t time_ms(void);
 
 int readline(char *, char *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -24,7 +24,7 @@
 
 # MCU name
 MCU = atmega168
-
+.PREFIX:
 F_CPU = 16000000
 
 # Output format. (can be srec, ihex, binary)
@@ -44,12 +44,8 @@ VPATH = $(srcdir)
 VERSION= arduino-ros-unknown
 #VERSION = $(shell ./setlocalversion)
 
-# List C source files here. (C dependencies are automatically generated.)
-SRC = $(wildcard *.c)
-
-# List C++ source files here. (C dependencies are automatically generated.)
-CCSRC = $(wildcard *.cpp) $(wildcard avr_ros/*.cpp)
-
+# List source files here.
+SRC = $(wildcard *.c) $(wildcard *.cpp) $(wildcard avr_ros/*.cpp)
 
 # List Assembler source files here.
 #     Make them always end in a capital .S.  Files ending in a lowercase .s
@@ -91,9 +87,9 @@ CDEFS = -DF_CPU=$(F_CPU)UL
 ADEFS = -DF_CPU=$(F_CPU)
 
 # Place -D or -U options here for C++ sources
-CPPDEFS = -DF_CPU=$(F_CPU)UL
-#CPPDEFS += -D__STDC_LIMIT_MACROS
-#CPPDEFS += -D__STDC_CONSTANT_MACROS
+CXXDEFS = -DF_CPU=$(F_CPU)UL
+#CXXDEFS += -D__STDC_LIMIT_MACROS
+#CXXDEFS += -D__STDC_CONSTANT_MACROS
 
 
 
@@ -138,24 +134,24 @@ CFLAGS += $(CSTANDARD)
 #  -Wall...:     warning level
 #  -Wa,...:      tell GCC to pass this to the assembler.
 #    -adhlns...: create assembler listing
-CPPFLAGS = -g$(DEBUG)
-CPPFLAGS += $(CPPDEFS)
-CPPFLAGS += -O$(OPT)
-CPPFLAGS += -funsigned-char
-CPPFLAGS += -funsigned-bitfields
-CPPFLAGS += -fpack-struct
-CPPFLAGS += -fshort-enums
-CPPFLAGS += -fno-exceptions
-CPPFLAGS += -Wall
-CPPFLAGS += -Wundef
-#CPPFLAGS += -mshort-calls
-#CPPFLAGS += -fno-unit-at-a-time
-#CPPFLAGS += -Wstrict-prototypes
-CPPFLAGS += -Wunreachable-code
-#CPPFLAGS += -Wsign-compare
-#CPPFLAGS += -Wa,-adhlns=$(<:%.cpp=$(OBJDIR)/%.lst)
-CPPFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
-#CPPFLAGS += $(CSTANDARD)
+CXXFLAGS = -g$(DEBUG)
+CXXFLAGS += $(CXXDEFS)
+CXXFLAGS += -O$(OPT)
+CXXFLAGS += -funsigned-char
+CXXFLAGS += -funsigned-bitfields
+CXXFLAGS += -fpack-struct
+CXXFLAGS += -fshort-enums
+CXXFLAGS += -fno-exceptions
+CXXFLAGS += -Wall
+CXXFLAGS += -Wundef
+#CXXFLAGS += -mshort-calls
+#CXXFLAGS += -fno-unit-at-a-time
+#CXXFLAGS += -Wstrict-prototypes
+CXXFLAGS += -Wunreachable-code
+#CXXFLAGS += -Wsign-compare
+#CXXFLAGS += -Wa,-adhlns=$(<:%.cpp=$(OBJDIR)/%.lst)
+CXXFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
+#CXXFLAGS += $(CSTANDARD)
 
 #---------------- Assembler Options ----------------
 #  -Wa,...:   tell GCC to pass this to the assembler.
@@ -296,43 +292,21 @@ RMDIR = rm -rf
 COPY = cp
 WINSHELL = cmd
 
-
-# Define Messages
-# English
-#MSG_ERRORS_NONE = Errors: none
-#MSG_SIZE_BEFORE = Size before: 
-#MSG_SIZE_AFTER = Size after:
-#MSG_COFF = Converting to AVR COFF:
-#MSG_EXTENDED_COFF = Converting to AVR Extended COFF:
-#MSG_FLASH = Creating load file for Flash:
-#MSG_EEPROM = Creating load file for EEPROM:
-#MSG_EXTENDED_LISTING = Creating Extended Listing:
-#MSG_SYMBOL_TABLE = Creating Symbol Table:
-#MSG_LINKING = Linking:
-#MSG_COMPILING_CPP = Compiling C++:
-#MSG_ASSEMBLING = Assembling:
-#MSG_CLEANING = Cleaning project:
-#MSG_CREATING_LIBRARY = Creating library:
-
-
 # Define all object files.
-CCOBJ = $(CCSRC:%.cpp=$(OBJDIR)/%.o)
-OBJ = $(SRC:%.c=$(OBJDIR)/%.o) $(CCOBJ) $(ASRC:%.S=$(OBJDIR)/%.o) 
+OBJ = $(SRC:=.o) 
 
 # Define all listing files.
-CCLST = $(CCSRC:%.cpp = $(OBJDIR)/%.lst)
-LST = $(SRC:%.c=$(OBJDIR)/%.lst) $(CCLST) $(ASRC:%.S=$(OBJDIR)/%.lst) 
-
+CCLST = $(CCSRC:=$(OBJDIR)/%.lst)
+LST = $(SRC:=$(OBJDIR)/%.lst) $(CCLST) $(ASRC:=$(OBJDIR)/%.lst) 
 
 # Compiler flags to generate dependency files.
 GENDEPFLAGS = -MMD -MP -MF .dep/$(@F).d
 
-
 # Combine all necessary flags and optional flags.
 # Add target processor to flags.
-ALL_CFLAGS = -mmcu=$(MCU) -I. $(CFLAGS) $(GENDEPFLAGS) -pipe -D __STDC_LIMIT_MACROS
-ALL_CPPFLAGS = -mmcu=$(MCU) -I. -x c++ $(CPPFLAGS) $(GENDEPFLAGS)
-ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
+ALL_CFLAGS   = -mmcu=$(MCU) -I. $(CFLAGS) $(GENDEPFLAGS) -pipe -D__STDC_LIMIT_MACROS
+ALL_CXXFLAGS = -mmcu=$(MCU) -I. -x c++ $(CXXFLAGS) $(GENDEPFLAGS)
+ALL_ASFLAGS  = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
 
 # Default target.
 all: ros build
@@ -343,16 +317,16 @@ rebuild: | clean build
 build: elf hex eep lss sym
 #build: lib
 
+.PHONY: ros
 ros:
 	rosrun avr_bridge gen_avr.py call_response.yaml .
-
 
 elf: $(TARGET).elf
 hex: $(TARGET).hex
 eep: $(TARGET).eep
 lss: $(TARGET).lss
 sym: $(TARGET).sym
-LIBNAME=lib$(TARGET).a
+LIBNAME = lib$(TARGET).a
 lib: $(LIBNAME)
 
 # Display size of file.
@@ -370,23 +344,15 @@ sizebefore:
 sizeafter:
 	@if test -f $(TARGET).elf; then $(ELFSIZE); 2>/dev/null; fi
 
-
-
-# Display compiler version information.
-gccversion : 
-	@$(CC) --version
-
 # Program the device.  
 program: $(TARGET).hex $(TARGET).eep
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 
-TTY_COM = /dev/ttyUSB0
+TTY = /dev/ttyUSB0
 fboot: $(TARGET).hex
-	fboot -b 115200 -d $(TTY_COM) -p $<
-
-TTY_XBEE = /dev/ttyUSB1
+	fboot -b 115200 -d $(TTY) -p $<
 picocom:
-	picocom -b 115200 -p o $(TTY_XBEE)
+	picocom -b 115200 -p o $(TTY)
 
 # Generate avr-gdb config/init file which does the following:
 #     define the reset signal, load the target file, connect to target, and set 
@@ -460,69 +426,65 @@ extcoff: $(TARGET).elf
 	@echo $(MSG_CREATING_LIBRARY) $@
 	$(AR) $@ $(OBJ)
 
-
 # Link: create ELF output file from object files.
 .SECONDARY : $(TARGET).elf
 .PRECIOUS : $(OBJ)
 %.elf: $(OBJ)
 	@echo LD $@
-	@$(CC) $(ALL_CFLAGS) $(GENDEPFLAGS) -o $@ $^ $(LDFLAGS)
-
+	@$(CC) $(ALL_CFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Compile: create object files from C source files.
-$(OBJDIR)/%.o : %.c
+%.c.o : %.c
 	@echo CC $@
-	@$(CC) $(ALL_CFLAGS) $(GENDEPFLAGS) -c -o $@ $<
+	@$(CC) $(ALL_CFLAGS) -c -o $@ $<
 
 
 # Compile: create object files from C++ source files.
-$(OBJDIR)/%.o : %.cpp
+%.cpp.o : %.cpp
 	@echo C++ $@
-	@$(CC) $(ALL_CPPFLAGS) -c -o $@ $<  
+	@$(CC) $(ALL_CXXFLAGS) -c -o $@ $<  
 
 
 # Compile: create assembler files from C source files.
-%.s : %.c
-	$(CC) -S $(ALL_CFLAGS) $(GENDEPFLAGS) -o $@ $<
+%.c.s : %.c
+	$(CC) -S $(ALL_CFLAGS) -o $@ $<
 
 
 # Compile: create assembler files from C++ source files.
-%.s : %.cpp
-	$(CC) -S $(ALL_CPPFLAGS) -o $@ $<
+%.cpp.s : %.cpp
+	$(CC) -S $(ALL_CXXFLAGS) -o $@ $<
 
 
 # Assemble: create object files from assembler source files.
-$(OBJDIR)/%.o : %.S
+%.S.o : %.S
 	@echo AS $@
 	@$(CC) $(ALL_ASFLAGS) -c -o $@ $<
 
 
 # Create preprocessed source for use in sending a bug report.
-%.i : %.c
-	$(CC) -E -mmcu=$(MCU) -I. $(CFLAGS) $(GENDEPFLAGS) -o $@ $<
+%.c.i : %.c
+	$(CC) -E -mmcu=$(MCU) -I. $(CFLAGS) -o $@ $<
 
 # Target: clean project.
+.PHONY: clean_msg %.clean clean
 clean_msg:
 	@echo CLEAN
 %.clean :
 	@$(RM) $*.hex $*.eep $*.cof $*.elf $*.map $*.sym $*.lss
 clean : | clean_msg $(TARGET).clean
-	@$(RM) $(SRC:%.c=$(OBJDIR)/%.o) \
-	      $(SRC:%.c=$(OBJDIR)/%.lst) \
-	      $(CCSRC:%.cpp=$(OBJDIR)/%.o) \
-	      $(SRC:.c=.s) \
-	      $(SRC:.c=.d) \
-	      $(SRC:.c=.i)
+	@$(RM) $(SRC:=$(OBJDIR)/%.o) \
+	      $(SRC:=$(OBJDIR)/%.lst) \
+	      $(CCSRC:=$(OBJDIR)/%.o) \
+	      $(SRC:=.s) \
+	      $(SRC:=.d) \
+	      $(SRC:=.i)
 	@$(RMDIR) .dep
-
 
 # Create object files directory
 $(shell mkdir $(OBJDIR) 2>/dev/null)
 
-
 # Include the dependency files.
 -include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
-
 
 # Listing of phony targets.
 .PHONY : all begin finish end sizebefore sizeafter gccversion \
