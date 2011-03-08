@@ -1,3 +1,11 @@
+#include <stdbool.h>
+#include <stdint.h>
+
+#include <util/crc.h>
+
+#define htole16(x) (x)
+
+#if 0
 typedef struct frame_send_ctx {
 	uint16_t crc;
 	void (*putchar)(uint8_t c);
@@ -149,3 +157,4 @@ void frame_recv_copy(frame_recv_ctx *fc, uint8_t *dst, uint8_t len)
 {
 	
 }
+#endif

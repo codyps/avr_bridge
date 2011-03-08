@@ -2,4 +2,5 @@
 *.[od]
 .*.swp
 *.pyc
-build
+build/
+test/avr_ros/
