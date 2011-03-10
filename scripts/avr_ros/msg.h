@@ -43,6 +43,7 @@
 #include <stdint.h>
 #include <avr_ros/types.h>
 #include <avr_ros/packet_out.h>
+#include <avr_ros/serializer.h>
 
 namespace ros {
 

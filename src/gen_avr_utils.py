@@ -91,45 +91,6 @@ def extract_ros_type(field):
 	if field.is_array:
 		incName = incName[:incName.find('[')]
 	return incPkg, incName
-	
-def type_to_rint(t):
-	conv = {
-		1 : 'uint8_t',
-		2 : 'uint16_t',
-		4 : 'uint32_t',
-		8 : 'uint64_t'
-	}
-
-	return conv[t]
-
-def make_union_cast(cf, field_name, otype, olen):
-	field_name = field_name.partition('[')[0]
-	uname = 'u_{0}'.format(field_name)
-
-	cf.line('union {')
-	cf.indent()
-	cf.line('{0} real;'.format(otype))
-	cf.line('{0} base;'.format(type_to_rint(olen)))
-	cf.dedent()
-	cf.line('}} {0};'.format(uname))
-
-	return uname
-
-def serialize_primitive(f, node, field):
-	"""Generate c code to serialize rostype of fieldname at the buffer 
-	"""
-	fpkg, ftype = extract_ros_type(field)
-	ctype, clen = primitives[ftype]
-	fname = field.name
-	
-	this = make_union_cast(f, fname, ctype, clen)
-	f.line('{0}.real = this->{1};'.format(this, fname))
-	for byte in range(0, clen):
-		mask = '0xFF'
-		f.line('{0}->pkt_send_byte(('.format(node) +
-			'{0}.base >> (8 * {1})) & {2});'.format(
-			this, byte, mask))
-
 
 def serialize_array(f, buf_n, field):
 	alen = field.array_len
@@ -153,24 +114,21 @@ def deserialize_array(f, buf_n, field):
 	f.dedent()
 	f.line('}')
 
+def serialize_primitive(f, node, field):
+	"""Generate c code to serialize rostype of fieldname at the buffer 
+	"""
+	f.line('ros::Serializer::serialize({0}, this->{1});'.format(node, field.name))
+
 def deserialize_primitive(f, buffer_addr, field):
 	"""
 	Generate c code to deserialize a rosmsg field of type ctype from 
 	specified buffer.
 	"""
-	fpkg, ftype = extract_ros_type(field)
-	ctype, clen = primitives[ftype]
-	fname = field.name
-
-	this = make_union_cast(f, fname, ctype, clen)
-	f.line('{0}.base = 0;'.format(this))
-	for byte in range(0, clen):
-		ol = '{0}.base |= ((typeof({0}.base)) (*({1} + offset + {2}))) << (8 * {3});' 
-		f.line(ol.format(this, buffer_addr, byte, byte))
-
-	f.line('this->{0} = {1}.real;'.format(fname, this))
-	f.line('offset += sizeof(this->{0});'.format(fname))
-				
+	f.line('int offset_{0} = ros::Serializer::deserialize({1}, this->{2});'.format(
+		field.name, buffer_addr, field.name))
+	f.line('{0} += offset_{1};'.format(buffer_addr, field.name))
+	f.line('total_offset += offset_{0};'.format(field.name))
+	f.line('')
 
 def write_header_file(f, msg_name, pkg, msg_spec):
 	"""
@@ -203,7 +161,6 @@ def write_header_file(f, msg_name, pkg, msg_spec):
 			f.macro_line('include "avr_ros/{0}.h"'.format(incName))
 	
 	#open namespace
-
 	f.line('namespace {0} {{'.format(pkg))
 	f.indent()
 
@@ -262,15 +219,16 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 				f.line('this->{0}.serialize({1});'.format(field.name, node))
 
 	def gen_deserialize(f, msg_spec, array_n):
-		f.line('ros::MsgSz offset = 0;')
+		f.line('ros::MsgSz total_offset = 0;')
+		f.line('')
 		for field in msg_spec.parsed_fields():
 			if (field.is_array and field.array_len):
 				deserialize_array(f, array_n, field)
 			elif (field_is_prim(field)):
 				deserialize_primitive(f, array_n, field)
 			else:
-				f.line('offset += this->{0}.deserialize({1} + offset);'.format(field.name, array_n))
-		f.line('return offset;')
+				f.line('total_offset += this->{0}.deserialize({1} + total_offset);'.format(field.name, array_n))
+		f.line('return total_offset;')
 
 	def gen_bytes(f, msg_spec):
 		"""
@@ -287,13 +245,14 @@ def write_cpp(f, msg_name, pkg, msg_spec):
 			if (field.is_builtin and not (field.type == 'string') ):
 				fpkg, ftype = extract_ros_type(field)
 				ctype, clen = primitives[ftype]
-				f.line('msgSize += sizeof({0});'.format(ctype))
+				f.line('msgSize += {0};'.format(clen))
 			else:
 				f.line('msgSize += {0}.bytes();'.format(field.name))
 		
 		f.line('return msgSize;')
 	
 	def writeFunct(rtype, msg, funct, args, implementation):
+		f.line('')
 		if rtype != '':
 			f.line('{0} {1}::{2}({3})'.format(rtype,msg,funct,args))
 		else:
