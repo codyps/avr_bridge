@@ -9,8 +9,23 @@
 namespace ros {
 
 	class Serializer {
-		public:
+		private:
+			/**
+			 * Reverses the byte order to handle little and big endian conversions.
+			 *
+			 * @param buffer - byte array to reverse
+			 * @param size - length of array to reverse
+			 */
+			static void reverse_bytes(uint8_t *bytes, uint16_t size)
+			{
+					for (uint16_t i = 0; i < size / 2; i++ ) {
+						uint8_t swap_byte = bytes[i];
+						bytes[i] = bytes[size - i - 1];
+						bytes[size - i - 1] = swap_byte;
+					}
+			}
 
+		public:
 			/**
 			 * Writes value to byte stream.
 			 *
@@ -28,6 +43,104 @@ namespace ros {
 				// Outputs each byte to the byte stream
 				for (uint8_t i = 0; i < sizeof(TYPE); i++) {
 					out->pkt_send_byte(u.base[i]);
+				}
+			}
+
+			/**
+			 * Writes doubles to byte stream. If the double is actually a single
+			 * precision float (32-bit) as is common on 8-bit AVRs, then converts to
+			 * a double precision float (64-bit).
+			 *
+			 * @param  out - packet handler to write to
+			 * @param  value - the data to write to the stream
+			 */
+			static void serialize(ros::PacketOut *out, double value) {
+				// If a double is treated as a single precision floating point value
+				// (a 32-bit float), then converts to a double precision floating
+				// point value (64-bit double)
+				if (sizeof(double) == 4) {
+					// Calculates the exponent and significand of the 32-bit float
+					union {
+						double real;
+						uint8_t bytes[sizeof(double)] ;
+					} float32;
+					float32.real = value;
+					// 8-bit AVRs are little endian, reverse bytes for calculations
+					Serializer::reverse_bytes(float32.bytes, sizeof(double));
+
+					uint32_t exponent    = ((float32.bytes[0] & 0x7F) << 1)
+							| ((float32.bytes[1] & 0x80) >> 7);
+					uint32_t significand = ((((uint32_t)(float32.bytes[1] & 0x7F)) << 16)
+							| (float32.bytes[2] << 8)
+							| (float32.bytes[3]));
+
+					// Sets the sign bit, exponent, and significand of the 64-bit double
+					union {
+						uint64_t real;
+						uint8_t bytes[8];
+					} double64;
+					double64.real = 0;
+
+					// Sets the sign bit
+					double64.bytes[0] = float32.bytes[0] & 0x80;
+
+					// Sets the exponent
+					if (exponent == 0) {
+						// +/- 0
+						if (significand  == 0) {
+							// Nothing left to do
+						}
+						// Sub-normal number
+						else {
+							// Only set the significand
+						}
+					}
+					// +/-INF and NaN
+					else if (exponent == 0xFF) {
+						double64.bytes[0] |= 0x7F;
+						double64.bytes[1]  = 0xF0;
+					}
+					// Normal number
+					else {
+						int16_t int_exp = exponent;
+						// IEEE 754 single precision exponent bias
+						int_exp -= 127;
+						// IEEE 754 double precision exponent bias
+						int_exp += 1023;
+						double64.bytes[0] |= (int_exp & 0x7F0) >> 4;
+						double64.bytes[1]  = (int_exp & 0x00F) << 4;
+					}
+
+					// Sets the significand, most significant bits first
+					if (significand != 0) {
+						double64.bytes[1] |= (float32.bytes[1] & 0x78) >> 3;
+						double64.bytes[2]  = (((float32.bytes[1] & 0x07) << 5)
+								| ((float32.bytes[2] & 0xF8) >> 3));
+						double64.bytes[3]  = (((float32.bytes[2] & 0x07) << 5)
+								| ((float32.bytes[3] & 0xF8) >> 3));
+						double64.bytes[4]  = ((float32.bytes[3] & 0x07) << 5);
+					}
+
+					// Outputs each byte to the byte stream
+					// As the bytes were reversed earlier for little endianess,
+					// re-reverses when outputting to stream
+					Serializer::reverse_bytes(double64.bytes, 8);
+					for (uint8_t i = 0; i < 8; i++) {
+						out->pkt_send_byte(double64.bytes[i]);
+					}
+				}
+				// A double is 64-bits on this chip, serializes bytes directly
+				else {
+					union {
+						double real;
+						uint8_t base[sizeof(double)];
+					} u;
+					u.real = value;
+
+					// Outputs each byte to the byte stream
+					for (uint8_t i = 0; i < sizeof(double); i++) {
+						out->pkt_send_byte(u.base[i]);
+					}
 				}
 			}
 
@@ -112,4 +225,3 @@ namespace ros {
 }
 
 #endif
-
