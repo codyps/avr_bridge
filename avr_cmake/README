@@ -3,6 +3,9 @@ copy the examke CMakeList.txt to your project directory along with the
 cmake_scripts directory.  Then:
 
 1.  Modify the project name
+2.  Set the location of the arduino hardware source code.  For
+    the example application, the source code has been copied into
+    a folder called "arduino" in the project directory
 2.  Choose which arduiono board you are using by including the correct
     cmake script.  By default, the arduino diecimila is included.
 3.  Add your src files to the PROJECT_SRC variable.

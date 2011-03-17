@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 2.6)
 
 #set your project name
 Project(avrBridge_example)
+
+#set the location of your arduino source code installation
+#in the example project, the arduino source code is included in the 
+#project folder
 set(ARDUINO_CORE_DIR  arduino)
 
 #Include the arduino board specific cmake file

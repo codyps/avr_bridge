@@ -3,7 +3,7 @@
  *
  * Software License Agreement (BSD License)
  *
- * Copyright (c) 2011, Adam Stambler
+ * Copyright (c) 2011, Adam Stambler, Cody Schafer
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

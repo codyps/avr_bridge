@@ -3,7 +3,7 @@
  *
  * Software License Agreement (BSD License)
  *
- * Copyright (c) 2011, Adam Stambler
+ * Copyright (c) 2011, Adam Stambler, Cody Schafer
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,8 @@ typedef void (RosCb)(Msg const *msg);
  * Lets try to get #3 in here
  */
 int fputc(char c, FILE *stream);
-static FILE *ros_io = fdevopen(fputc, NULL);
+int fgetc(FILE* stream);
+static FILE *ros_io = fdevopen(ros::fputc, ros::fgetc);
 
 enum PktType {
 	PT_TOPIC = 0,
@@ -189,6 +190,15 @@ public:
 	{
 		if (this->in_ctx.append(c)) {
 			this->process_pkt();
+		}
+	}
+	void spin()
+	{ 
+		char c = ros::getc(this->io);
+		if (c != -1){
+			if (this->in_ctx.append(c)) {
+				this->process_pkt();
+			}
 		}
 	}
 

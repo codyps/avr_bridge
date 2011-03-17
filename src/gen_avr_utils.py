@@ -336,6 +336,8 @@ class CGenerator():
 		if self.config.has_key('service'):
 			for topic in self.config['service']:
 				#import that msg's python module
+				topic =topic.rstrip().lstrip()
+
 				msg_type = self.config['service'][topic]['type']
 
 				#TODO IMPLEMENT SERVICES
@@ -346,6 +348,7 @@ class CGenerator():
 		#subscribes must get their topic id first
 		if self.config.has_key('subscribe'):
 			for topic in self.config['subscribe']:
+				topic =topic.rstrip().lstrip()
 				#import that msg's python module
 				msg_type = self.config['subscribe'][topic]['type']
 				self.addMsg(topic, msg_type)
@@ -355,6 +358,7 @@ class CGenerator():
 		if self.config.has_key('publish'):
 			for topic in self.config['publish']:
 				#import that msg's python module
+				topic =topic.rstrip().lstrip()
 				msg_type = self.config['publish'][topic]['type']
 				self.addMsg(topic, msg_type)
 				self.topic_ids[topic] = len(self.topic_ids)
@@ -381,7 +385,7 @@ class CGenerator():
 				elif primitives.has_key(msgType) or msgType== 'string':
 					pass
 				else:
-					print "The msg type is ", msgType
+					#print "The msg type is ", msgType
 					tpkg, tmsg = msgType.split('/')
 					self.addMsg(tpkg, tmsg)
 
