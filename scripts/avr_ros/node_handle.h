@@ -3,6 +3,7 @@
  *
  * Software License Agreement (BSD License)
  *
+ * Copyright 2011, Cody Schafer <cpschafer@gmail.com>
  * Copyright (c) 2011, Adam Stambler
  * All rights reserved.
  *
@@ -58,9 +59,9 @@ namespace ros {
 
 typedef void (RosCb)(Msg const *msg);
 
-/* this is defined by the user so that we may send bytes. */
-extern FILE *byte_io;
-
+int fputc(char c, FILE *stream);
+int fgetc(FILE* stream);
+static FILE *byte_io = fdevopen(ros::fputc, ros::fgetc);
 
 typedef uint8_t Publisher;
 
@@ -163,6 +164,15 @@ public:
 	{
 		if (this->in_ctx.append(c)) {
 			this->process_pkt();
+		}
+	}
+	void spin()
+	{ 
+		char c = ros::getc(this->io);
+		if (c != -1){
+			if (this->in_ctx.append(c)) {
+				this->process_pkt();
+			}
 		}
 	}
 

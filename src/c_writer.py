@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 # vim: sw=8 ts=8 sts=8 noet 
 """
 Copyright (c) 2011, Cody Schafer
