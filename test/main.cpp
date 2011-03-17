@@ -6,8 +6,12 @@
 #include "libarduino2.h"
 
 namespace ros {
-	FILE _byte_io;
-	FILE *byte_io = &_byte_io;
+	void byte_put(uint8_t c) {
+		return serial_putbyte(c);
+	}
+	int byte_get(void) {
+		return serial_getbyte_nonblock();
+	}
 }
 
 ros::Publisher resp;
@@ -46,10 +50,7 @@ static uint8_t response_mem[60];
 __attribute__((OS_main))
 int main(void)
 {
-	fdev_setup_stream(&ros::_byte_io, serial_putchar,
-			serial_getchar_nonblock, _FDEV_SETUP_RW);
 	serial_init();
-
 	sei();
 
 	digital_init(13, PIN_OUTPUT);

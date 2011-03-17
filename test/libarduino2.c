@@ -216,7 +216,7 @@ inline static void barrier(void)
     asm volatile("":::"memory");
 }
 
-int serial_getchar_nonblock(__attribute__((unused)) FILE *fp) {
+int serial_getbyte_nonblock(void) {
     char ch;
 
     /* Only read from the buffer if new data is available. */
@@ -227,6 +227,10 @@ int serial_getchar_nonblock(__attribute__((unused)) FILE *fp) {
     } else {
         return EOF;
     }
+}
+
+int serial_getchar_nonblock(__attribute__((unused)) FILE *fp) {
+    return serial_getbyte_nonblock();
 }
 
 int serial_getchar(__attribute__((unused)) FILE *fp) {
@@ -254,6 +258,11 @@ static void serial_txi_off(void) {
 }
 
 int serial_putchar(char ch, __attribute__((unused)) FILE *fp) {
+    serial_putbyte(ch);
+    return 0;
+}
+
+void serial_putbyte(uint8_t ch) {
     /* Block until space is available. */
     while (((g_uart_tx.head + 1) & (sizeof(g_uart_tx.buf) - 1))
             == g_uart_tx.tail) {
@@ -264,7 +273,6 @@ int serial_putchar(char ch, __attribute__((unused)) FILE *fp) {
     g_uart_tx.head = (g_uart_tx.head + 1) & (sizeof(g_uart_tx.buf) - 1);
 
     serial_txi_on();
-    return 0;
 }
 
 ISR(USART_UDRE_vect) {

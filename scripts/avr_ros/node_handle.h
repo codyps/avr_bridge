@@ -48,6 +48,7 @@
 #include "avr_ros/string.h"
 #include "avr_ros/packet_out.h"
 #include "avr_ros/msg.h"
+#include "avr_ros/byte_io.h"
 
 #define __deprecated __attribute__((deprecated))
 
@@ -58,10 +59,6 @@
 namespace ros {
 
 typedef void (RosCb)(Msg const *msg);
-
-int fputc(char c, FILE *stream);
-int fgetc(FILE* stream);
-static FILE *byte_io = fdevopen(ros::fputc, ros::fgetc);
 
 typedef uint8_t Publisher;
 
@@ -136,7 +133,6 @@ class NodeHandle {
 public:
 	NodeHandle(char const *node_name)
 		: name(node_name)
-		, pout(byte_io)
 	{}
 
 	/* retrieve the unique ID of the publisher */
@@ -166,20 +162,11 @@ public:
 			this->process_pkt();
 		}
 	}
-	void spin()
-	{ 
-		char c = ros::getc(this->io);
-		if (c != -1){
-			if (this->in_ctx.append(c)) {
-				this->process_pkt();
-			}
-		}
-	}
 
 	void spin(void)
 	{
 		int c;
-		while ((c = getc(byte_io)) != EOF) {
+		while ((c = byte_get()) != EOF) {
 			this->spin(c);
 		}
 	}

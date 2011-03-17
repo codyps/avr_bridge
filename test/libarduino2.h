@@ -47,6 +47,8 @@ FILE *serial_init(void);
 int serial_getchar_nonblock(FILE *fp);
 int serial_getchar(FILE *);
 int serial_putchar(char c, FILE *);
+int serial_getbyte_nonblock(void);
+void serial_putbyte(uint8_t c);
 
 void timer_init(void);
 void timer_start(uint16_t ms);

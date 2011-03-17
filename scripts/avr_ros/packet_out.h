@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <avr_ros/types.h>
+#include <avr_ros/byte_io.h>
 
 namespace ros {
 	enum PktType {
@@ -18,12 +19,6 @@ namespace ros {
 	};
 
 	class PacketOut {
-	private:
-		FILE *byte_io;
-	public:
-		PacketOut(FILE *byte_io_)
-			: byte_io(byte_io_)
-		{}
 	public:
 		void pkt_start(enum PktType pkt_type, uint8_t topic,
 				MsgSz data_len)
@@ -34,7 +29,12 @@ namespace ros {
 				data_len
 			};
 
-			fwrite(&head, sizeof(head), 1, byte_io);
+			uint8_t *hp = (typeof(hp))&head;
+
+			uint8_t i;
+			for (i = 0; i < sizeof(head); i++) {
+				byte_put(hp[i]);
+			}
 		}
 
 		void pkt_end(void)
@@ -44,12 +44,7 @@ namespace ros {
 
 		void pkt_send_byte(uint8_t c)
 		{
-			putc(c, byte_io);
-		}
-
-		uint8_t pkt_recv_byte(void)
-		{
-			return getc(byte_io);
+			byte_put(c);
 		}
 	};
 }
