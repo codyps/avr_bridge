@@ -70,13 +70,8 @@ struct InputCtx {
 
 	bool append(char c)
 	{
-		/* the last call to append completed the packet, start over */
-		if (buffer_index == sizeof(this->header)
-				+ this->header.msg_length) {
-			this->reset();
-		}
-
-		if (buffer_index == (BUFFER_SZ - 1)) {
+		/* out of space. */
+		if (buffer_index == BUFFER_SZ) {
 			this->reset();
 		}
 
@@ -84,6 +79,8 @@ struct InputCtx {
 		this->buffer_index++;
 
 		bool header_completed = this->buffer_index ==
+			sizeof(this->header);
+		bool prev_header_completed = this->buffer_index >
 			sizeof(this->header);
 		bool packet_completed = this->buffer_index ==
 			this->header.msg_length + sizeof(this->header);
@@ -108,13 +105,15 @@ struct InputCtx {
 			}
 
 			return false;
-		} else if (packet_completed) {
+		} else if (prev_header_completed && packet_completed) {
+			this->reset();
 			return true;
 		}
 		return false;
 	}
 
-	void reset(void) {
+	void reset(void)
+	{
 		this->buffer_index = 0;
 	}
 
